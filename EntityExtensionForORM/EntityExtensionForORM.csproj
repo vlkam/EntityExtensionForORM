@@ -45,6 +45,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Snippets\EEcollection.snippet" />
+    <None Include="Snippets\EEprop.snippet" />
+    <None Include="Snippets\EEref.snippet" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="SQLite.Net, Version=3.1.0.0, Culture=neutral, processorArchitecture=MSIL">

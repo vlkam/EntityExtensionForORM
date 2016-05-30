@@ -11,7 +11,7 @@ namespace EntityExtensionForORM.Tests
 
         public UTDbContext (string path) : base(new SQLitePlatformWin32(),path) {
 
-            connect = GetConnectionForTestOnly();
+            //connect = GetConnectionForTestOnly();
             connect.TraceListener = new DebugTraceListener_OutputWindow();
             connect.CreateTable<User>();
             connect.CreateTable<UserType>();

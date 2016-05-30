@@ -52,6 +52,11 @@ namespace EntityExtensionForORM
             return true;
         }
 
+        protected T Get<T>(ref T field,[CallerMemberName] string propertyName = null)
+        {
+            return field;
+        }
+        
         /*
         private void AddedRef<T>(Guid id,T obj) where T : Base
         {
@@ -64,9 +69,9 @@ namespace EntityExtensionForORM
 #endregion 
 
 #region Reference Get/Set
-        protected bool SetEntityGuid(ref Guid? idField_, Guid? newid,[CallerMemberName] string propertyName = null)
+        protected bool SetEntityGuid<T>(ref T idField_, T newid,[CallerMemberName] string propertyName = null)
         {
-            if (idField_ == newid) return false;
+            if (EqualityComparer<T>.Default.Equals(idField_,newid)) return false;
             Modified();
             idField_ = newid;
             OnPropertyChanged(propertyName);
@@ -74,6 +79,10 @@ namespace EntityExtensionForORM
 
             // ? Try to get from DB 
             return true;
+        }
+
+        protected T GetEntityGuid<T>(ref T idField_,[CallerMemberName] string propertyName = null) {
+            return idField_;
         }
 
         protected bool SetEntity<T>(ref T refField_,ref Guid? idField_, T newRef,[CallerMemberName] string propertyName = null) where T : Base

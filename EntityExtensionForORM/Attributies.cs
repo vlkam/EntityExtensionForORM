@@ -30,4 +30,13 @@ namespace EntityExtensionForORM
         }
     }
 
+    [AttributeUsage(AttributeTargets.Property)]
+    public class DataTypeAttribute : Attribute 
+    {
+        public DataTypeAttribute(){}
+        public DataTypeAttribute(object dt) { }
+    }
+
+    
+
 }

@@ -11,26 +11,17 @@ namespace EntityExtensionForORM.Tests
         public const string TableName = "Users";
 
         // properties
-        public string Name { get { return Name_; } set { Set(ref Name_, value); } } private string Name_;
+        public string Name { get { return Get(ref Name_); } set { Set(ref Name_, value); } } private string Name_;
         //public string Name { get; set; }
         
         
         // reference properties
-        public Guid? UserType_id {
-            get { return UserType_id_; }
-            set { SetEntityGuid(ref UserType_id_, value); }}
-            private Guid? UserType_id_;
+        public Guid? UserType_id { get { return GetEntityGuid(ref UserType_id_); } set { SetEntityGuid(ref UserType_id_, value); }} private Guid? UserType_id_;
         [Ignore][CascadeDelete]
-        public UserType UserType {
-            get { return GetEntity(ref UserType_,ref UserType_id_); }
-            set { SetEntity(ref UserType_,ref UserType_id_,value); }}
-        private UserType UserType_;
+        public UserType UserType { get { return GetEntity(ref UserType_,ref UserType_id_); } set { SetEntity(ref UserType_,ref UserType_id_,value); }} private UserType UserType_;
         
         [Ignore][InverseProperty("User")][CascadeDelete]
-        public ObservableCollection<UserRole> UserRoles {
-            get { return GetCollection(ref UserRoles_); }
-            set { SetCollection(ref UserRoles_, value); } }
-        private ObservableCollection<UserRole> UserRoles_;
+        public ObservableCollection<UserRole> UserRoles { get { return GetCollection(ref UserRoles_); } set { SetCollection(ref UserRoles_, value); } } private ObservableCollection<UserRole> UserRoles_;
 
         public User() : base() {
             UserRoles = new ObservableCollection<UserRole>();

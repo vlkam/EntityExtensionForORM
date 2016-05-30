@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+      <Title>Entity Extension ref property</Title>
+      <Author>vlkam</Author>
+      <Description></Description>
+      <HelpUrl></HelpUrl>
+      <Shortcut>eec</Shortcut>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal Editable="true">
+          <ID>Type</ID>
+          <ToolTip>Type</ToolTip>
+          <Default><![CDATA[ObservableCollection<>]]></Default>
+          <Function>
+          </Function>
+        </Literal>
+        <Literal Editable="true">
+          <ID>Name</ID>
+          <ToolTip>Name</ToolTip>
+          <Default>Name</Default>
+          <Function>
+          </Function>
+        </Literal>
+        <Literal Editable="true">
+          <ID>InverseProperty</ID>
+          <ToolTip>InverseProperty</ToolTip>
+          <Default>InverseProperty</Default>
+          <Function>
+          </Function>
+        </Literal>
+      </Declarations>
+      <Code Language="csharp">
+          <![CDATA[
+// $Type$ $Name$  -> $InverseProperty$
+[Ignore][InverseProperty("$InverseProperty$")][CascadeDelete]
+public $Type$ $Name$ { get { return GetCollection(ref  $Name$_); } set { SetCollection(ref  $Name$_, value); } } private $Type$  $Name$_;]]>
+        
+      </Code>
+    </Snippet>
+
+
+    
+  </CodeSnippet>
+</CodeSnippets>

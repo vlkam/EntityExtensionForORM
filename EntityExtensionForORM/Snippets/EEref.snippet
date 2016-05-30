@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+      <Title>Entity Extension ref property</Title>
+      <Author>vlkam</Author>
+      <Description></Description>
+      <HelpUrl></HelpUrl>
+      <Shortcut>eer</Shortcut>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal Editable="true">
+          <ID>Type</ID>
+          <ToolTip>Type</ToolTip>
+          <Default>Type</Default>
+          <Function>
+          </Function>
+        </Literal>
+        <Literal Editable="true">
+          <ID>Name</ID>
+          <ToolTip>Name</ToolTip>
+          <Default>Name</Default>
+          <Function>
+          </Function>
+        </Literal>
+      </Declarations>
+      <Code Language="csharp">
+          <![CDATA[
+// $Type$ $Name$ 
+public Guid? $Name$_id { get { return GetEntityGuid(ref $Name$_id_); } set { SetEntityGuid(ref $Name$_id_, value); }} private Guid? $Name$_id_;
+[Ignore][CascadeDelete][ForeignKey("$Name$_id")]
+public $Type$ $Name$ { get { return GetEntity(ref $Name$_,ref $Name$_id_); } set { SetEntity(ref $Name$_,ref $Name$_id_,value); }} private $Type$ $Name$_;]]>
+      </Code>
+    </Snippet>
+
+
+    
+  </CodeSnippet>
+</CodeSnippets>

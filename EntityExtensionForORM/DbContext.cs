@@ -14,7 +14,7 @@ namespace EntityExtensionForORM
     {
         protected SQLiteConnection connect;
         public SQLiteConnection GetConnectionForTestOnly() { return connect; }
-
+        
         public DBschema DBschema;
         
         public Dictionary<Guid, Entity> entities = new Dictionary<Guid, Entity>();
