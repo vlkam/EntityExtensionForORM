@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -13,8 +14,10 @@ namespace EntityExtensionForORM
 {
     public class Base : INotifyPropertyChanged
     {
-        [PrimaryKey]
-        public Guid id { get; set; }
+        
+       
+        [PrimaryKey]        
+        public UUID id { get; set; }
 
         [Ignore]
         public DbContext DBContext { get; set;}
@@ -25,12 +28,46 @@ namespace EntityExtensionForORM
 
         public Base()
         {
-            id = Guid.NewGuid();
+            id = new UUID();
         }
 
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        public void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public virtual void OnPropertyChanged<T>(Expression<Func<T>> propertyExpression)
+        {
+            var handler = PropertyChanged;
+            if (handler != null)
+            {
+                var propertyName = GetPropertyName(propertyExpression);
+                handler(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
+        public static string GetPropertyName<T>(Expression<Func<T>> propertyExpression)
+        {
+            if (propertyExpression == null)
+            {
+                throw new ArgumentNullException("propertyExpression");
+            }
+
+            var body = propertyExpression.Body as MemberExpression;
+
+            if (body == null)
+            {
+                throw new ArgumentException("Invalid argument", "propertyExpression");
+            }
+
+            var property = body.Member as PropertyInfo;
+
+            if (property == null)
+            {
+                throw new ArgumentException("Argument is not a property", "propertyExpression");
+            }
+
+            return property.Name;
         }
 
         private void Modified()
@@ -69,7 +106,7 @@ namespace EntityExtensionForORM
 #endregion 
 
 #region Reference Get/Set
-        protected bool SetEntityGuid<T>(ref T idField_, T newid,[CallerMemberName] string propertyName = null)
+        protected bool SetEntityId<T>(ref T idField_, T newid,[CallerMemberName] string propertyName = null)
         {
             if (EqualityComparer<T>.Default.Equals(idField_,newid)) return false;
             Modified();
@@ -81,11 +118,11 @@ namespace EntityExtensionForORM
             return true;
         }
 
-        protected T GetEntityGuid<T>(ref T idField_,[CallerMemberName] string propertyName = null) {
+        protected T GetEntityId<T>(ref T idField_,[CallerMemberName] string propertyName = null) {
             return idField_;
         }
 
-        protected bool SetEntity<T>(ref T refField_,ref Guid? idField_, T newRef,[CallerMemberName] string propertyName = null) where T : Base
+        protected bool SetEntity<T>(ref T refField_,ref UUID idField_, T newRef,[CallerMemberName] string propertyName = null) where T : Base
         {
             if (EqualityComparer<T>.Default.Equals(refField_, newRef)) return false;
             if(newRef != null)
@@ -106,15 +143,16 @@ namespace EntityExtensionForORM
             return true;
         }
 
-        protected T GetEntity<T>(ref T Entity,ref Guid? id,[CallerMemberName] string propertyName = null) where T : Base
+        protected T GetEntity<T>(ref T Entity,ref UUID id,[CallerMemberName] string propertyName = null) where T : Base
         {
             if (DBContext == null) return Entity;
 
-            if(id == Guid.Empty || id == null)
+            //if(id == Guid.Empty || id == null)
+            if(id == null)
             {
                 if(Entity != null)
                 {
-                    throw new Exception("GetEntity : Value of entity isn't null but Guid field of entity is null. Entity<"+this+">");
+                    throw new Exception("GetEntity : Value of entity isn't null but Id field of entity is null. Entity<"+this+">");
                 } else
                 {
                     return null;
@@ -133,7 +171,7 @@ namespace EntityExtensionForORM
             }
 
             // Context lazy loading
-            T obj = DBContext.Get<T>((Guid)id);
+            T obj = DBContext.Get<T>(id);
             return obj;
         }
 #endregion
@@ -152,10 +190,11 @@ namespace EntityExtensionForORM
                         {
                             if (obj.DBContext == null) DBContext.AddNewItemToDBContext(obj,collection_info.DependentTableInfo.Type);
                             PropertyInfo prop = collection_info.KeyIdProperytInfo.Property;//collection_info.CollectionItemTypeInfo.GetDeclaredProperty(collection_info.InversePropertyId);
-                            Guid? old_id = (Guid?)prop.GetValue(obj);
+                            UUID old_id = (UUID)prop.GetValue(obj);
                             if(old_id != this.id)
                             {
                                 obj.Modified();
+                                //obj.id = this.id;
                                 prop.SetValue(obj, this.id);
                             }
                         }

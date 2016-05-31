@@ -25,7 +25,25 @@ namespace EntityExtensionForORM.Tests
             if (File.Exists(path)) File.Delete(path);
             return new UTDbContext(path);
         }
-       
+
+        public class Us1
+        {
+            public UUID id { get; set; }
+        }
+
+        public class TestContext : DbContext
+        {
+
+            public TestContext (string path) : base(new SQLitePlatformWin32(),path) {
+
+                //connect = GetConnectionForTestOnly();
+
+                connect.ExtraTypeMappings.Add(typeof(UUID), "blob");
+                connect.CreateTable<Us1>();
+                connect.Close();
+            }
+        }
+
         [TestMethod]
         public void DBConnectTestMethod()
         {
@@ -51,7 +69,7 @@ namespace EntityExtensionForORM.Tests
         {
             DbContext db = RecreateDB();
 
-            Guid user_id = Guid.NewGuid();
+            UUID user_id = new UUID();
 
             // Add new user to context
             User us = new User { id = user_id,Name = "Really cool user" };
@@ -67,7 +85,7 @@ namespace EntityExtensionForORM.Tests
             Assert.IsTrue(entity.State == Entity.EntityState.Added);
 
             // Makes change in user
-            Guid usertype_id = Guid.NewGuid();
+            UUID usertype_id = new UUID();
             UserType type = new UserType { id = usertype_id};
             us.UserType = type;
 
@@ -157,7 +175,7 @@ namespace EntityExtensionForORM.Tests
             db.Close();
 
             // Lazy loading
-            Guid userid = user.id;
+            UUID userid = user.id;
             user = null;
             db = ConnectToDb();
 

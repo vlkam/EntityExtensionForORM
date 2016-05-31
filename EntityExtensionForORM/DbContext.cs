@@ -17,15 +17,16 @@ namespace EntityExtensionForORM
         
         public DBschema DBschema;
         
-        public Dictionary<Guid, Entity> entities = new Dictionary<Guid, Entity>();
+        public Dictionary<UUID, Entity> entities = new Dictionary<UUID, Entity>();
         public Guid ContextId = Guid.NewGuid();
 
         public DbContext(ISQLitePlatform platform,string path)
         {
             connect = new SQLiteConnection(platform, path);
+            connect.ExtraTypeMappings.Add(typeof(UUID), "blob");
         }
 
-        public void RegisterChange<T>(Guid id,T obj) where T : Base
+        public void RegisterChange<T>(UUID id,T obj) where T : Base
         {
             Entity entity;
             if (!entities.TryGetValue(id,out entity))
@@ -184,7 +185,7 @@ namespace EntityExtensionForORM
             }
             obj.DBContext = this;
 
-            Guid id = obj.id;
+            UUID id = obj.id;
             if (entities.ContainsKey(id)) throw new Exception("Cannot add entity <"+obj+"> to DbContext because it already over there");
 
             Entity entity = new Entity
@@ -204,7 +205,27 @@ namespace EntityExtensionForORM
             if (!entities.TryGetValue(obj.id, out entity)) AttachToDBContext(obj,Entity.EntityState.Unchanged);
         }
 
-        public T Get<T>(Guid id) where T : Base
+        public T FirstOrDefault<T>(Func<T,bool> predicate,bool attachToContext = true) where T : Base
+        {
+            T obj = connect.Table<T>().FirstOrDefault(predicate);
+            if (obj != null && attachToContext) AttachToDBContext(obj, Entity.EntityState.Unchanged);
+            return obj;
+        }
+
+        public List<T> Set<T>(bool attachToContext = false) where T : Base
+        {
+            List<T> lst = connect.Table<T>().ToList();
+            if (attachToContext)
+            {
+                foreach(var elm in lst)
+                {
+                    AttachToDBContext(elm, Entity.EntityState.Unchanged);
+                }
+            }
+            return lst;
+        }
+
+        public T Get<T>(UUID id) where T : Base
         {
             Entity entity;
             
@@ -232,6 +253,16 @@ namespace EntityExtensionForORM
         public T FirstOrDefault<T>() where T : Base
         {
             return First<T>();
+        }
+
+        public bool ObjectExists<T>(T obj) where T : Base
+        {
+            return connect.Find<T>(obj.id) != null;
+        }
+
+        public TableQuery<T> Table<T>() where T : Base
+        {
+            return connect.Table<T>();
         }
 
         public void Delete<T>(T obj) where T : Base
@@ -265,7 +296,15 @@ namespace EntityExtensionForORM
                 }
 
             }
+        }
 
+        public void DeleteRange<T>(IEnumerable<T> lst) where T : Base
+        {
+            Type type = typeof(T);
+            foreach (T elm in lst)
+            {
+                Delete(elm,type);
+            }
         }
     }
 }

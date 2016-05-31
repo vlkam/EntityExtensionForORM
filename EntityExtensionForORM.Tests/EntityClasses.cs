@@ -14,9 +14,8 @@ namespace EntityExtensionForORM.Tests
         public string Name { get { return Get(ref Name_); } set { Set(ref Name_, value); } } private string Name_;
         //public string Name { get; set; }
         
-        
         // reference properties
-        public Guid? UserType_id { get { return GetEntityGuid(ref UserType_id_); } set { SetEntityGuid(ref UserType_id_, value); }} private Guid? UserType_id_;
+        public UUID UserType_id { get { return GetEntityId(ref UserType_id_); } set { SetEntityId(ref UserType_id_, value); }} private UUID UserType_id_;
         [Ignore][CascadeDelete]
         public UserType UserType { get { return GetEntity(ref UserType_,ref UserType_id_); } set { SetEntity(ref UserType_,ref UserType_id_,value); }} private UserType UserType_;
         
@@ -56,7 +55,7 @@ namespace EntityExtensionForORM.Tests
         public const string TableName = "UserRoles";
         public string Name { get; set; }
 
-        public Guid User_id { get; set; }
+        public UUID User_id { get; set; }
         [ForeignKey("User_id")][Ignore]
         public User User { get; set; }
 
