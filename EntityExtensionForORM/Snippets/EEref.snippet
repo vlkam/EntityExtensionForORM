@@ -31,7 +31,8 @@
       <Code Language="csharp">
           <![CDATA[
 // $Type$ $Name$ 
-public byte[]? $Name$_id { get { return GetEntitybyte[](ref $Name$_id_); } set { SetEntitybyte[](ref $Name$_id_, value); }} private byte[]? $Name$_id_;
+[NotNull]
+public UUID $Name$_id { get { return GetEntityId(ref $Name$_id_); } set { SetEntityId(ref $Name$_id_, value); }} private UUID $Name$_id_;
 [Ignore][CascadeDelete][ForeignKey("$Name$_id")]
 public $Type$ $Name$ { get { return GetEntity(ref $Name$_,ref $Name$_id_); } set { SetEntity(ref $Name$_,ref $Name$_id_,value); }} private $Type$ $Name$_;]]>
       </Code>

@@ -12,9 +12,7 @@ namespace EntityExtensionForORM
         public int Order;
         public EntityState State = EntityState.Undefined;
 
-        public override string ToString()
-        {
-            return Obj + "  " + Type + "  " + State;
-        }
+        public override string ToString() => Obj + "  " + Type + "  " + State;
+
     }
 }
