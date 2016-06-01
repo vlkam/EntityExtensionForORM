@@ -15,9 +15,9 @@ namespace EntityExtensionForORM
     public class Base : INotifyPropertyChanged
     {
         
-       
         [PrimaryKey]        
-        public UUID id { get; set; }
+        public UUID id { get { return Get(ref id_); } set { Set(ref id_, value); } }
+        private UUID id_;
 
         [Ignore]
         public DbContext DBContext { get; set;}
@@ -28,7 +28,7 @@ namespace EntityExtensionForORM
 
         public Base()
         {
-            id = new UUID();
+            id_ = new UUID();
         }
 
         public void OnPropertyChanged([CallerMemberName] string propertyName = null)
