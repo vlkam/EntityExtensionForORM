@@ -18,31 +18,18 @@ namespace EntityExtensionForORM.Tests
             return Path.Combine(Environment.CurrentDirectory, "test.db");
         }
 
-        private UTDbContext ConnectToDb() => new UTDbContext(PathToDb());
+        private UTDbContext ConnectToDb() {
+            DbConnect con = new DbConnect(new SQLitePlatformWin32(), PathToDb());
+            return new UTDbContext(con);
+        }
+        
 
         private UTDbContext RecreateDB() {
             string path = PathToDb();
             if (File.Exists(path)) File.Delete(path);
-            return new UTDbContext(path);
+            return ConnectToDb();
         }
 
-        public class Us1
-        {
-            public UUID id { get; set; }
-        }
-
-        public class TestContext : DbContext
-        {
-
-            public TestContext (string path) : base(new SQLitePlatformWin32(),path) {
-
-                //connect = GetConnectionForTestOnly();
-
-                connect.ExtraTypeMappings.Add(typeof(UUID), "blob");
-                connect.CreateTable<Us1>();
-                connect.Close();
-            }
-        }
 
         [TestMethod]
         public void DBConnectTestMethod()

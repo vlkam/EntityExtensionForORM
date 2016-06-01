@@ -38,6 +38,7 @@
     <Compile Include="Auxiliary\DebugTraceListener_OutputWindow.cs" />
     <Compile Include="Base.cs" />
     <Compile Include="CollectionInfo.cs" />
+    <Compile Include="DbConnect.cs" />
     <Compile Include="DbContext.cs" />
     <Compile Include="DBSchema.cs" />
     <Compile Include="Entity.cs" />

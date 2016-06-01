@@ -343,6 +343,7 @@ namespace EntityExtensionForORM
         public override bool Equals(object obj)
         {
             if (obj == null) return false;
+            if (!(obj is Base)) return false;
             return ((Base)obj).id == this.id;
         }
 

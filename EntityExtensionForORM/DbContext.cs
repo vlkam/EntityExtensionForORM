@@ -10,20 +10,20 @@ using System.Reflection;
 
 namespace EntityExtensionForORM
 {
-   public class DbContext 
+
+    public  class  DbContext 
     {
-        protected SQLiteConnection connect;
-        public SQLiteConnection GetConnectionForTestOnly() { return connect; }
+        DbConnect DbConnect;
+        public SQLiteConnection GetConnectionForTestOnly() { return DbConnect; }
         
         public DBschema DBschema;
         
         public Dictionary<UUID, Entity> entities = new Dictionary<UUID, Entity>();
         public Guid ContextId = Guid.NewGuid();
 
-        public DbContext(ISQLitePlatform platform,string path)
+        public DbContext(DbConnect DbConnect_)
         {
-            connect = new SQLiteConnection(platform, path);
-            connect.ExtraTypeMappings.Add(typeof(UUID), "blob");
+            DbConnect = DbConnect_;
         }
 
         public void RegisterChange<T>(UUID id,T obj) where T : Base
@@ -51,7 +51,7 @@ namespace EntityExtensionForORM
         public void CreateSchema()
         {
             DBschema = new DBschema();
-            foreach(var tableMap in connect.TableMappings)
+            foreach(var tableMap in DbConnect.TableMappings)
             {
                 TableInfo table = new TableInfo { SqlName = tableMap.TableName,Type = tableMap.MappedType,TypeInfo = tableMap.MappedType.GetTypeInfo()};
                 DBschema.Tables.Add(tableMap.MappedType,table);
@@ -129,7 +129,7 @@ namespace EntityExtensionForORM
                 elm.Value.Obj.DBContext = null;
             }
             entities.Clear();
-            connect.Close();
+            DbConnect.Close();
         }
 
         public void SaveChanges()
@@ -141,11 +141,11 @@ namespace EntityExtensionForORM
                 {
                     case Entity.EntityState.Added:
                     case Entity.EntityState.Modified:
-                        connect.InsertOrReplace(Value.Obj, Value.Type);
+                        DbConnect.InsertOrReplace(Value.Obj, Value.Type);
                         keyval.Value.State = Entity.EntityState.Unchanged;
                         break;
                     case Entity.EntityState.Deleted:
-                        connect.Delete(Value.Obj);
+                        DbConnect.Delete(Value.Obj);
                         break;
                     case Entity.EntityState.Unchanged:
                         break;
@@ -200,21 +200,21 @@ namespace EntityExtensionForORM
 
         public void Insert<T>(T obj) where T: Base
         {
-            connect.Insert(obj);
+            DbConnect.Insert(obj);
             Entity entity;
             if (!entities.TryGetValue(obj.id, out entity)) AttachToDBContext(obj,Entity.EntityState.Unchanged);
         }
 
         public T FirstOrDefault<T>(Func<T,bool> predicate,bool attachToContext = true) where T : Base
         {
-            T obj = connect.Table<T>().FirstOrDefault(predicate);
+            T obj = DbConnect.Table<T>().FirstOrDefault(predicate);
             if (obj != null && attachToContext) AttachToDBContext(obj, Entity.EntityState.Unchanged);
             return obj;
         }
 
         public List<T> Set<T>(bool attachToContext = false) where T : Base
         {
-            List<T> lst = connect.Table<T>().ToList();
+            List<T> lst = DbConnect.Table<T>().ToList();
             if (attachToContext)
             {
                 foreach(var elm in lst)
@@ -233,7 +233,7 @@ namespace EntityExtensionForORM
             if (entities.TryGetValue(id, out entity)) return (T)entity.Obj;
 
             // tries to get from db
-            T obj = connect.Find<T>(id);
+            T obj = DbConnect.Find<T>(id);
             if(obj != null)
             {
                 AttachToDBContext(obj,Entity.EntityState.Unchanged);
@@ -243,7 +243,7 @@ namespace EntityExtensionForORM
 
         public T First<T>() where T : Base
         {
-            T obj = connect.Table<T>().FirstOrDefault();
+            T obj = DbConnect.Table<T>().FirstOrDefault();
             Entity entity;
             if (entities.TryGetValue(obj.id, out entity)) return (T)entity.Obj;
             AttachToDBContext(obj,Entity.EntityState.Unchanged);
@@ -257,12 +257,12 @@ namespace EntityExtensionForORM
 
         public bool ObjectExists<T>(T obj) where T : Base
         {
-            return connect.Find<T>(obj.id) != null;
+            return DbConnect.Find<T>(obj.id) != null;
         }
 
         public TableQuery<T> Table<T>() where T : Base
         {
-            return connect.Table<T>();
+            return DbConnect.Table<T>();
         }
 
         public void Delete<T>(T obj) where T : Base
