@@ -1,21 +1,21 @@
 ﻿
 
 using EntityExtensionForORM.Auxiliary;
-using SQLite.Net.Platform.Win32;
+using SQLite.Net.Interop;
 
 
 namespace EntityExtensionForORM.Tests
 {
-   public class UTDbContext : DbContext
+
+    public class UTDbConnect : DbConnect
     {
+        public UTDbConnect(ISQLitePlatform platform, string path) : base(platform, path)
+        {
+            TraceListener = new DebugTraceListener_OutputWindow();
 
-        public UTDbContext (DbConnect connect) : base(connect) {
-
-            connect.TraceListener = new DebugTraceListener_OutputWindow();
-
-            connect.CreateTable<User>();
-            connect.CreateTable<UserType>();
-            connect.CreateTable<UserRole>();
+            CreateTable<User>();
+            CreateTable<UserType>();
+            CreateTable<UserRole>();
 
             CreateSchema();
         }

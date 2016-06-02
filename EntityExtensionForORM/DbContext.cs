@@ -1,12 +1,9 @@
 ﻿
 using SQLite.Net;
-using SQLite.Net.Attributes;
-using SQLite.Net.Interop;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace EntityExtensionForORM
 {
@@ -14,9 +11,8 @@ namespace EntityExtensionForORM
     public  class  DbContext 
     {
         DbConnect DbConnect;
+        public DBschema DBschema; 
         public SQLiteConnection GetConnectionForTestOnly() { return DbConnect; }
-        
-        public DBschema DBschema;
         
         public Dictionary<UUID, Entity> entities = new Dictionary<UUID, Entity>();
         public Guid ContextId = Guid.NewGuid();
@@ -24,6 +20,7 @@ namespace EntityExtensionForORM
         public DbContext(DbConnect DbConnect_)
         {
             DbConnect = DbConnect_;
+            DBschema = DbConnect.DBschema;
         }
 
         public void RegisterChange<T>(UUID id,T obj) where T : Base
@@ -45,75 +42,6 @@ namespace EntityExtensionForORM
                     break;
                 default:
                     throw new Exception("RegisterChange<T> : Entity status is invalid");
-            }
-        }
-
-        public void CreateSchema()
-        {
-            DBschema = new DBschema();
-            foreach(var tableMap in DbConnect.TableMappings)
-            {
-                TableInfo table = new TableInfo { SqlName = tableMap.TableName,Type = tableMap.MappedType,TypeInfo = tableMap.MappedType.GetTypeInfo()};
-                DBschema.Tables.Add(tableMap.MappedType,table);
-                foreach(var columnMap in tableMap.Columns)
-                {
-                    ColumnInfo ci = new ColumnInfo();
-                    ci.ClrName = columnMap.PropertyName;
-                    ci.Type = columnMap.ColumnType;
-                    ci.TypeInfo = ci.Type.GetTypeInfo();
-                    ci.Property = table.Type.GetRuntimeProperty(columnMap.PropertyName);
-                    ci.Table = table;
-                    ci.IsNullable = columnMap.IsNullable;
-                    ci.SqlName = columnMap.Name;
-
-                    table.Columns.Add(ci.ClrName,ci);
-                }
-
-                // scans all property
-                foreach (var property in tableMap.MappedType.GetRuntimeProperties())
-                {
-                    string propname = property.Name;
-                    ColumnInfo ci;
-                    if(!table.Columns.TryGetValue(propname, out ci))
-                    {
-                        ci = new ColumnInfo();
-                        ci.ClrName = propname;
-                        ci.Type = property.PropertyType;
-                        ci.TypeInfo = property.PropertyType.GetTypeInfo();
-                        ci.Property = property;
-                        ci.NotMapped = true;
-                        ci.Table = table;
-                        table.Columns.Add(propname,ci);
-                    }
-                    foreach (var customattr in property.CustomAttributes)
-                    {
-                        if (customattr.AttributeType == typeof(IgnoreAttribute))
-                        {
-                            ci.IgnoreAttibute = true;
-                            continue;
-                        }
-                        if (customattr.AttributeType == typeof(CascadeDeleteAttribute))
-                        {
-                            ci.CascadeDeleteAttribute = true;
-                            continue;
-                        }
-                        if (customattr.AttributeType == typeof(InversePropertyAttribute))
-                        {
-                            ci.InversePropertyAttribute = true;
-                            continue;
-                        }
-                    }
-                }
-
-                // post processing
-                foreach (ColumnInfo ci in table.Columns.Values)
-                {
-                    if (ci.InversePropertyAttribute)
-                    {
-                        ci.GenericType = ci.Type.GenericTypeArguments[0];
-                        //ci.GenericTypeInfo = ci.GenericType.GetTypeInfo();
-                    }
-                }
             }
         }
 
@@ -223,6 +151,22 @@ namespace EntityExtensionForORM
                 }
             }
             return lst;
+        }
+
+        public T Find<T>(UUID id,bool AttachToContext = true) where T : Base
+        {
+            Entity entity;
+            
+            // tries to get from cache
+            if (entities.TryGetValue(id, out entity)) return (T)entity.Obj;
+
+            // tries to get from db
+            T obj = DbConnect.Find<T>(id);
+            if(AttachToContext && obj != null)
+            {
+                AttachToDBContext(obj,Entity.EntityState.Unchanged);
+            }
+            return obj;
         }
 
         public T Get<T>(UUID id) where T : Base

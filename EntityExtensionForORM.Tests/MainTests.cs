@@ -18,13 +18,13 @@ namespace EntityExtensionForORM.Tests
             return Path.Combine(Environment.CurrentDirectory, "test.db");
         }
 
-        private UTDbContext ConnectToDb() {
-            DbConnect con = new DbConnect(new SQLitePlatformWin32(), PathToDb());
-            return new UTDbContext(con);
+        private DbContext ConnectToDb() {
+            UTDbConnect con = new  UTDbConnect(new SQLitePlatformWin32(), PathToDb());
+            return new DbContext(con);
         }
         
 
-        private UTDbContext RecreateDB() {
+        private DbContext RecreateDB() {
             string path = PathToDb();
             if (File.Exists(path)) File.Delete(path);
             return ConnectToDb();
