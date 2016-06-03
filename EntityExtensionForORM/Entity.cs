@@ -7,7 +7,7 @@ namespace EntityExtensionForORM
 
         public enum EntityState {Undefined = 0,Added,Deleted,Detached,Modified,Unchanged}
         
-        public Base Obj;
+        public WeakReference<Base> Obj;
         public Type Type;
         public int Order;
         public EntityState State = EntityState.Undefined;

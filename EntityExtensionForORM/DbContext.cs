@@ -14,8 +14,10 @@ namespace EntityExtensionForORM
         public DBschema DBschema; 
         public SQLiteConnection GetConnectionForTestOnly() { return DbConnect; }
         
-        public Dictionary<UUID, Entity> entities = new Dictionary<UUID, Entity>();
+        public Dictionary<UUID,Entity> Entities = new Dictionary<UUID, Entity>();
         public Guid ContextId = Guid.NewGuid();
+
+        //List<Entity> Changes => entities.Values.Where(x => x.State != Entity.EntityState.Unchanged).ToList();
 
         public DbContext(DbConnect DbConnect_)
         {
@@ -23,12 +25,33 @@ namespace EntityExtensionForORM
             DBschema = DbConnect.DBschema;
         }
 
-        public void RegisterChange<T>(UUID id,T obj) where T : Base
+        public T FindObjectInCache<T>(UUID id) where T : Base
         {
             Entity entity;
-            if (!entities.TryGetValue(id,out entity))
+            if (!Entities.TryGetValue(id,out entity)) return null;
+
+            Base obj;
+            if(!entity.Obj.TryGetTarget(out obj))
             {
-                throw new Exception("RegisterChange: Entity<"+obj+"> isn't attached to DbContext");
+                throw new Exception("FindObjectInCache : Cannot resolve a weakreference");
+            }
+            return (T)obj;
+        }
+
+
+        public Entity FindEntityInCache(UUID id)
+        {
+            Entity entity;
+            if (!Entities.TryGetValue(id,out entity)) return null;
+            return entity;
+        }
+
+        public void RegisterChange<T>(UUID id,T obj) where T : Base
+        {
+            Entity entity = FindEntityInCache(id);
+            if (entity == null)
+            {
+                throw new Exception("RegisterChange: Entity<"+obj+"> isn't attached to DbContext.");
             }
 
             switch (entity.State)
@@ -47,38 +70,53 @@ namespace EntityExtensionForORM
 
         public void ClearChanges()
         {
-            entities.Clear();
+            Entities.Clear();
+        }
+
+        public bool HasChanges()
+        {
+            return Entities.Values.Any(x=>x.State != Entity.EntityState.Unchanged);
         }
 
         public void Close()
         {
-            foreach(var elm in entities)
+            foreach(var elm in Entities)
             {
-                elm.Value.Obj.DBContext = null;
+                Base obj;
+                if(elm.Value.Obj.TryGetTarget(out obj))
+                {
+                    obj.DBContext = null;
+                }
             }
-            entities.Clear();
-            DbConnect.Close();
+            Entities.Clear();
         }
 
         public void SaveChanges()
         {
-            foreach(var keyval in entities)
+            foreach(var keyval in Entities)
             {
-                var Value = keyval.Value;
-                switch (Value.State)
+                var value = keyval.Value;
+                WeakReference<Base> refer = value.Obj;
+                Base obj;
+                if(!refer.TryGetTarget(out obj))
+                {
+                    throw new Exception("Weakreference " + refer + " cannot be resolve. Order: " + value.Order + " Type : " + value.Type);
+                }
+
+                switch (value.State)
                 {
                     case Entity.EntityState.Added:
                     case Entity.EntityState.Modified:
-                        DbConnect.InsertOrReplace(Value.Obj, Value.Type);
+                        DbConnect.InsertOrReplace(obj, value.Type);
                         keyval.Value.State = Entity.EntityState.Unchanged;
                         break;
                     case Entity.EntityState.Deleted:
-                        DbConnect.Delete(Value.Obj);
+                        DbConnect.Delete(obj);
                         break;
                     case Entity.EntityState.Unchanged:
                         break;
                     default:
-                        throw new Exception("Uknown operation type "+Value.State);
+                        throw new Exception("Uknown operation type "+value.State);
                 }
             }
         }
@@ -114,23 +152,23 @@ namespace EntityExtensionForORM
             obj.DBContext = this;
 
             UUID id = obj.id;
-            if (entities.ContainsKey(id)) throw new Exception("Cannot add entity <"+obj+"> to DbContext because it already over there");
+            if (Entities.ContainsKey(id)) throw new Exception("Cannot add entity <"+obj+"> to DbContext because it already over there");
 
             Entity entity = new Entity
             {
-                Obj = obj,
+                Obj = new WeakReference<Base>(obj),
                 Type = type,
-                Order = entities.Count,
+                Order = Entities.Count,
                 State = state
             };
-            entities.Add(id, entity);
+            Entities.Add(id, entity);
         }
 
         public void Insert<T>(T obj) where T: Base
         {
             DbConnect.Insert(obj);
             Entity entity;
-            if (!entities.TryGetValue(obj.id, out entity)) AttachToDBContext(obj,Entity.EntityState.Unchanged);
+            if (!Entities.TryGetValue(obj.id, out entity)) AttachToDBContext(obj,Entity.EntityState.Unchanged);
         }
 
         public T FirstOrDefault<T>(Func<T,bool> predicate,bool attachToContext = true) where T : Base
@@ -155,30 +193,16 @@ namespace EntityExtensionForORM
 
         public T Find<T>(UUID id,bool AttachToContext = true) where T : Base
         {
-            Entity entity;
-            
-            // tries to get from cache
-            if (entities.TryGetValue(id, out entity)) return (T)entity.Obj;
+            Entity entity = FindEntityInCache(id);
 
-            // tries to get from db
-            T obj = DbConnect.Find<T>(id);
-            if(AttachToContext && obj != null)
+            T obj = FindObjectInCache<T>(id);
+            if(obj == null)
             {
-                AttachToDBContext(obj,Entity.EntityState.Unchanged);
+               // try to get it from db
+                obj = DbConnect.Find<T>(id);
             }
-            return obj;
-        }
 
-        public T Get<T>(UUID id) where T : Base
-        {
-            Entity entity;
-            
-            // tries to get from cache
-            if (entities.TryGetValue(id, out entity)) return (T)entity.Obj;
-
-            // tries to get from db
-            T obj = DbConnect.Find<T>(id);
-            if(obj != null)
+            if(AttachToContext && obj != null)
             {
                 AttachToDBContext(obj,Entity.EntityState.Unchanged);
             }
@@ -188,8 +212,11 @@ namespace EntityExtensionForORM
         public T First<T>() where T : Base
         {
             T obj = DbConnect.Table<T>().FirstOrDefault();
-            Entity entity;
-            if (entities.TryGetValue(obj.id, out entity)) return (T)entity.Obj;
+            if (obj == null) return null;
+
+            T objc = FindObjectInCache<T>(obj.id);
+            if (objc != null) return objc;
+
             AttachToDBContext(obj,Entity.EntityState.Unchanged);
             return obj;
         }
@@ -217,7 +244,7 @@ namespace EntityExtensionForORM
         public void Delete(Base obj,Type type)
         {
             Entity entity;
-            if (!entities.TryGetValue(obj.id, out entity)) throw new Exception("Delete : Can't find an object in the cache");
+            if (!Entities.TryGetValue(obj.id, out entity)) throw new Exception("Delete : Can't find an object in the cache");
             entity.State = Entity.EntityState.Deleted;
 
             TableInfo ti = DBschema.GetTable(type);

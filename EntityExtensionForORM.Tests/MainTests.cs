@@ -67,7 +67,7 @@ namespace EntityExtensionForORM.Tests
 
             // Is user added to context ? 
             entity = null;
-            db.entities.TryGetValue(user_id, out entity);
+            db.Entities.TryGetValue(user_id, out entity);
             Assert.IsTrue(entity != null);
             Assert.IsTrue(entity.State == Entity.EntityState.Added);
 
@@ -78,7 +78,7 @@ namespace EntityExtensionForORM.Tests
 
             // Is usertype added to context ?
             entity = null;
-            db.entities.TryGetValue(usertype_id, out entity);
+            db.Entities.TryGetValue(usertype_id, out entity);
             Assert.IsTrue(entity != null);
             Assert.IsTrue(entity.State == Entity.EntityState.Added);
 
@@ -150,14 +150,14 @@ namespace EntityExtensionForORM.Tests
             user.UserRoles.Add(new UserRole { Name = "Customer" });
 
             Assert.IsTrue(isCollectionChanged);
-            Assert.IsTrue(db.entities.Count == 4);
-            Assert.IsTrue(db.entities[user.id].State == Entity.EntityState.Added);
-            Assert.IsTrue(db.entities[user.UserRoles[0].id].State == Entity.EntityState.Added);
-            Assert.IsTrue(!db.entities.Any(x => x.Value.State != Entity.EntityState.Added));
+            Assert.IsTrue(db.Entities.Count == 4);
+            Assert.IsTrue(db.Entities[user.id].State == Entity.EntityState.Added);
+            Assert.IsTrue(db.Entities[user.UserRoles[0].id].State == Entity.EntityState.Added);
+            Assert.IsTrue(!db.Entities.Any(x => x.Value.State != Entity.EntityState.Added));
 
             db.SaveChanges();
-            Assert.IsTrue(db.entities[user.id].State == Entity.EntityState.Unchanged);
-            Assert.IsTrue(db.entities[user.UserRoles[0].id].State == Entity.EntityState.Unchanged);
+            Assert.IsTrue(db.Entities[user.id].State == Entity.EntityState.Unchanged);
+            Assert.IsTrue(db.Entities[user.UserRoles[0].id].State == Entity.EntityState.Unchanged);
 
             db.Close();
 
@@ -166,20 +166,20 @@ namespace EntityExtensionForORM.Tests
             user = null;
             db = ConnectToDb();
 
-            user = db.Get<User>(userid);
+            user = db.Find<User>(userid);
             Assert.IsTrue(user.UserRoles.Count == 2);
             Assert.IsTrue(user.UserType.id != null);
-            Assert.IsFalse(db.entities.Any(x=>x.Value.State != Entity.EntityState.Unchanged));
+            Assert.IsFalse(db.Entities.Any(x=>x.Value.State != Entity.EntityState.Unchanged));
             db.Close();
 
             // Delete
             user = null;
             db = ConnectToDb();
-            user = db.Get<User>(userid);
+            user = db.Find<User>(userid);
 
             db.Delete(user);
             
-            Assert.IsTrue(!db.entities.Any(x=>x.Value.State != Entity.EntityState.Deleted));
+            Assert.IsTrue(!db.Entities.Any(x=>x.Value.State != Entity.EntityState.Deleted));
             db.SaveChanges();
             db.Close();
 
@@ -187,7 +187,7 @@ namespace EntityExtensionForORM.Tests
             user = null;
             db = ConnectToDb();
 
-            user = db.Get<User>(userid);
+            user = db.Find<User>(userid);
             Assert.IsNull(user);
             Assert.IsTrue(db.GetConnectionForTestOnly().Table<User>().Count() == 0);
             Assert.IsTrue(db.GetConnectionForTestOnly().Table<UserRole>().Count() == 0);
