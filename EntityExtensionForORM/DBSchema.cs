@@ -68,9 +68,14 @@ namespace EntityExtensionForORM
         public bool CascadeDeleteAttribute = false;
         public bool NotMapped = false;
         public bool IgnoreAttibute = false;
+
         public bool InversePropertyAttribute = false;
+        public string InversePropertyName;
 
         public bool IsNullable;
+
+        public bool ForeignKeyAttribute;
+        public string ForeignKeyName;
 
         public ColumnInfo()
         {
@@ -78,7 +83,7 @@ namespace EntityExtensionForORM
 
         public override string ToString()
         {
-            return "["+ClrName+"("+Type+")]";
+            return "["+ClrName+"   ("+Type+")]";
         }
     }
 }

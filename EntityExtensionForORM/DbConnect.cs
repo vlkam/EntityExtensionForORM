@@ -2,6 +2,8 @@
 using SQLite.Net;
 using SQLite.Net.Attributes;
 using SQLite.Net.Interop;
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace EntityExtensionForORM
@@ -9,6 +11,8 @@ namespace EntityExtensionForORM
     public class DbConnect : SQLiteConnection
     {
         public DBschema DBschema;
+
+        public List<WeakReference<DbContext>> Contexts = new List<WeakReference<DbContext>>();
 
         public DbConnect(ISQLitePlatform platform,string path) : base (platform,path)
         {
@@ -67,7 +71,13 @@ namespace EntityExtensionForORM
                         if (customattr.AttributeType == typeof(InversePropertyAttribute))
                         {
                             ci.InversePropertyAttribute = true;
+                            ci.InversePropertyName = (string)customattr.ConstructorArguments[0].Value;
                             continue;
+                        }
+                        if(customattr.AttributeType == typeof(ForeignKeyAttribute))
+                        {
+                            ci.ForeignKeyAttribute = true;
+                            ci.ForeignKeyName = (string)customattr.ConstructorArguments[0].Value;
                         }
                     }
                 }
@@ -84,5 +94,17 @@ namespace EntityExtensionForORM
             }
         }
 
+        public void SynchronizeContexts(DbContext context)
+        {
+            foreach(WeakReference<DbContext> weakref in Contexts)
+            {
+                DbContext ctx;
+                if (!weakref.TryGetTarget(out ctx)) continue;
+                if (ctx.Id == context.Id) continue;
+
+                //foreach()
+
+            }
+        }
     }
 }

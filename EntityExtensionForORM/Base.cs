@@ -19,8 +19,9 @@ namespace EntityExtensionForORM
         public UUID id { get { return Get(ref id_); } set { Set(ref id_, value); } }
         private UUID id_;
 
-        [Ignore]
-        public DbContext DBContext { get; set;}
+        public DbContext DBContext;
+
+        bool isSynchronization = false;
 
         List<CollectionInfo> Collections = new List<CollectionInfo>();
 
@@ -29,6 +30,21 @@ namespace EntityExtensionForORM
         public Base()
         {
             id_ = new UUID();
+        }
+
+        public void SynchronizeWith<T>(T obj) where T : Base => SynchronizeWith(obj, typeof(T));
+
+        public void SynchronizeWith(Base obj,Type type)
+        {
+            isSynchronization = true;
+            TableInfo ti;
+            if (!DBContext.DBschema.Tables.TryGetValue(type, out ti)) throw new Exception("Table for type " + type + " not found");
+            foreach(ColumnInfo ci in ti.Columns.Values)
+            {
+                if (ci.IgnoreAttibute) continue;
+                ci.Property.SetValue(this,ci.Property.GetValue(obj));
+            }
+            isSynchronization = false;
         }
 
         public void OnPropertyChanged([CallerMemberName] string propertyName = null)
@@ -72,7 +88,7 @@ namespace EntityExtensionForORM
 
         private void Modified()
         {
-            if (DBContext != null)
+            if (DBContext != null && !isSynchronization)
             {
                 DBContext.RegisterChange(id, this);
             }

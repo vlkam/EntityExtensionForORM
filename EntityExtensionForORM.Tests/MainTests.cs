@@ -13,28 +13,28 @@ namespace EntityExtensionForORM.Tests
     public class MainTests
     {
 
-        private string PathToDb()
+        private string PathToDb(string basename)
         {
-            return Path.Combine(Environment.CurrentDirectory, "test.db");
+            return Path.Combine(Environment.CurrentDirectory, basename);
         }
 
-        private DbContext ConnectToDb() {
-            UTDbConnect con = new  UTDbConnect(new SQLitePlatformWin32(), PathToDb());
+        private DbContext ConnectToDb(string basename) {
+            UTDbConnect con = new  UTDbConnect(new SQLitePlatformWin32(), PathToDb(basename));
             return new DbContext(con);
         }
         
 
-        private DbContext RecreateDB() {
-            string path = PathToDb();
+        private DbContext RecreateDB(string basename) {
+            string path = PathToDb(basename);
             if (File.Exists(path)) File.Delete(path);
-            return ConnectToDb();
+            return ConnectToDb(basename);
         }
 
 
         [TestMethod]
         public void DBConnectTestMethod()
         {
-            DbContext db = RecreateDB();
+            DbContext db = RecreateDB("DBConnectTest.db");
 
             SQLiteConnection connect = db.GetConnectionForTestOnly();
             connect.Insert(new User { Name = "Test user" });
@@ -54,7 +54,7 @@ namespace EntityExtensionForORM.Tests
         [TestMethod]
         public void AddToContext()
         {
-            DbContext db = RecreateDB();
+            DbContext db = RecreateDB("AddToContext.db");
 
             UUID user_id = new UUID();
 
@@ -94,7 +94,7 @@ namespace EntityExtensionForORM.Tests
         [TestMethod]
         public void NotifyPropertyChangedTest()
         {
-            DbContext db = RecreateDB();
+            DbContext db = RecreateDB("NotifyPropertyChanged.db");
 
             User user = new User();
             db.AddNewItemToDBContext(user);
@@ -113,7 +113,7 @@ namespace EntityExtensionForORM.Tests
         {
 
             DbContext db;
-            db = RecreateDB();
+            db = RecreateDB("SaveChanges_and_LazyLoading.db");
 
             User user = new User { Name = "Peter" };
             db.AddNewItemToDBContext(user);
@@ -126,7 +126,7 @@ namespace EntityExtensionForORM.Tests
             user.UserType = null;
             user = null;
 
-            db = ConnectToDb();
+            db = ConnectToDb("SaveChanges_and_LazyLoading.db");
             user = db.First<User>();
 
             Assert.IsTrue(user.UserType.Type == "Cool");
@@ -138,7 +138,7 @@ namespace EntityExtensionForORM.Tests
         {
             // Add to DB
             DbContext db;
-            db = RecreateDB();
+            db = RecreateDB("CollectionTest.db");
 
             User user = new User { Name = "Alex" };
             db.AddNewItemToDBContext(user);
@@ -164,7 +164,7 @@ namespace EntityExtensionForORM.Tests
             // Lazy loading
             UUID userid = user.id;
             user = null;
-            db = ConnectToDb();
+            db = ConnectToDb("CollectionTest.db");
 
             user = db.Find<User>(userid);
             Assert.IsTrue(user.UserRoles.Count == 2);
@@ -174,7 +174,7 @@ namespace EntityExtensionForORM.Tests
 
             // Delete
             user = null;
-            db = ConnectToDb();
+            db = ConnectToDb("CollectionTest.db");
             user = db.Find<User>(userid);
 
             db.Delete(user);
@@ -185,13 +185,58 @@ namespace EntityExtensionForORM.Tests
 
             // try to get data from database
             user = null;
-            db = ConnectToDb();
+            db = ConnectToDb("CollectionTest.db");
 
             user = db.Find<User>(userid);
             Assert.IsNull(user);
             Assert.IsTrue(db.GetConnectionForTestOnly().Table<User>().Count() == 0);
             Assert.IsTrue(db.GetConnectionForTestOnly().Table<UserRole>().Count() == 0);
             Assert.IsTrue(db.GetConnectionForTestOnly().Table<UserType>().Count() == 0);
+        }
+
+        [TestMethod]
+        public void SyncronizationContextsTest()
+        {
+            string path = PathToDb("SyncronizationContextsTest.db");
+            if (File.Exists(path)) File.Delete(path);
+
+            UTDbConnect con = new  UTDbConnect(new SQLitePlatformWin32(), path);
+
+            DbContext ctx1 = new DbContext(con);
+            User usr1 = new User { Name = "Alex" };
+            ctx1.AddNewItemToDBContext(usr1);
+            ctx1.SaveChanges();
+
+            DbContext ctx2 = new DbContext(con);
+            User usr2 = ctx2.FirstOrDefault<User>(x => x.Name == "Alex");
+            Assert.IsNotNull(usr2);
+            Assert.IsTrue(usr2.Name == "Alex");
+            Assert.IsTrue(usr1.id == usr2.id);
+
+            bool isChanged = false;
+            usr1.PropertyChanged += (x, e) => { isChanged = true; };
+
+            usr2.Name = "Alex!";
+
+            UserRole ur = new UserRole { Name = "Admin" };
+            var coll = usr1.UserRoles.ToList();
+            usr2.UserRoles.Add(ur);
+            bool isCollectionChanged = false;
+            usr1.UserRoles.CollectionChanged += (x, e) => { isCollectionChanged = true; };
+            Assert.IsTrue(ctx2.Entities.Count == 2);
+            
+            ctx2.SaveChanges(true);
+
+            //usr1.SynchronizeWith(usr2);
+            Assert.IsTrue(usr1.Name == "Alex!");
+            Assert.IsTrue(isChanged);
+            Assert.IsTrue(isCollectionChanged);
+
+            Entity ent = ctx1.FindEntityInCache(usr1.id);
+            Assert.IsTrue(ent.State == Entity.EntityState.Unchanged);
+            Assert.IsTrue(usr1.UserRoles[0].Name == "Admin");
+
+
         }
 
     }
