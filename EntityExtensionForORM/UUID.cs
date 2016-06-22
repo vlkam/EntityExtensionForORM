@@ -6,7 +6,9 @@ namespace EntityExtensionForORM
 {
     public class UUID : ISerializable<byte[]>
     {
-        byte[] id { get; set; }
+        byte[] id {
+            get;
+            set; }
 
         public Guid guid { get { return new Guid(id); } }
 
@@ -15,9 +17,17 @@ namespace EntityExtensionForORM
         public static bool operator == (UUID u1,UUID u2) => Equals(u1,u2);
         public byte[] Serialize() => id;
         
-        public UUID(){id = Guid.NewGuid().ToByteArray();}
-        public UUID(byte[] id_){id = id_;}
-        public UUID(Guid id_) { id = id_.ToByteArray(); }
+        public UUID(){
+            id = Guid.NewGuid().ToByteArray();
+        }
+
+        public UUID(byte[] id_){
+            id = id_;
+        }
+
+        public UUID(Guid id_) {
+            id = id_.ToByteArray();
+        }
 
         public override bool Equals(object obj)
         {

@@ -37,6 +37,10 @@ namespace EntityExtensionForORM
         public DataTypeAttribute(object dt) { }
     }
 
-    
+    [AttributeUsage(AttributeTargets.All)]
+    public class PrivateData : Attribute 
+    {
+        public PrivateData(){}
+    }
 
 }

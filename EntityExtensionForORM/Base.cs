@@ -16,7 +16,9 @@ namespace EntityExtensionForORM
     {
         
         [PrimaryKey]        
-        public UUID id { get { return Get(ref id_); } set { Set(ref id_, value); } }
+        public UUID id {
+            get { return Get(ref id_); }
+            set { Set(ref id_, value); } }
         private UUID id_;
 
         public DbContext DBContext;

@@ -159,7 +159,11 @@ namespace EntityExtensionForORM
                                     break;
 
                                 case Entity.EntityState.Deleted:
-                                    throw new NotImplementedException();
+                                    Base old_obj = owner_collection_typed.FirstOrDefault(x => x.id == source_obj.id);
+                                    if (old_obj != null)
+                                    {
+                                        owner_collection.Remove(old_obj);
+                                    }
                                     break;
                             }
 
@@ -209,7 +213,7 @@ namespace EntityExtensionForORM
                     case Entity.EntityState.Unchanged:
                         break;
                     default:
-                        throw new Exception("Uknown operation type "+entity.State);
+                        throw new Exception("Unknown operation type "+entity.State);
                 }
             }
             if (synchronazeContexts) SynchronizeContexts();
