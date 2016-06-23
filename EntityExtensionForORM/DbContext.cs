@@ -35,7 +35,9 @@ namespace EntityExtensionForORM
             Base obj;
             if(!entity.Obj.TryGetTarget(out obj))
             {
-                throw new Exception("FindObjectInCache : Cannot resolve a weakreference");
+                //throw new Exception("FindObjectInCache : Cannot resolve a weakreference");
+                Entities.Remove(id);
+                return null;
             }
             return (T)obj;
         }
@@ -59,6 +61,7 @@ namespace EntityExtensionForORM
             {
                 case Entity.EntityState.Unchanged:
                     entity.State = Entity.EntityState.Modified;
+                    entity.HardReference = obj;
                     break;
                 case Entity.EntityState.Added:
                     break;
@@ -189,28 +192,31 @@ namespace EntityExtensionForORM
             foreach(var keyval in Entities)
             {
                 Entity entity = keyval.Value;
+                if (entity.State == Entity.EntityState.Unchanged) continue;
+                /*
                 WeakReference<Base> refer = entity.Obj;
                 Base obj;
                 if(!refer.TryGetTarget(out obj))
                 {
                     throw new Exception("Weakreference " + refer + " cannot be resolve. Order: " + entity.Order + " Type : " + entity.Type);
                 }
-
+                */
+                //Base obj = entity.HardReference;
                 switch (entity.State)
                 {
                     case Entity.EntityState.Added:
                     case Entity.EntityState.Modified:
-                        DbConnect.InsertOrReplace(obj, entity.Type);
+                        DbConnect.InsertOrReplace(entity.HardReference, entity.Type);
                         entity.PreviousState = entity.State;
                         entity.IsNeedSynchronize = true;
                         entity.State = Entity.EntityState.Unchanged;
+                        entity.HardReference = null;
                         break;
                     case Entity.EntityState.Deleted:
-                        DbConnect.Delete(obj);
+                        DbConnect.Delete(entity.HardReference);
                         entity.PreviousState = entity.State;
                         entity.IsNeedSynchronize = true;
-                        break;
-                    case Entity.EntityState.Unchanged:
+                        entity.HardReference = null;
                         break;
                     default:
                         throw new Exception("Unknown operation type "+entity.State);
@@ -252,6 +258,11 @@ namespace EntityExtensionForORM
             UUID id = obj.id;
             if (Entities.ContainsKey(id)) throw new Exception("Cannot add entity <"+obj+"> to DbContext because it already over there");
 
+            //if(id.guid.ToString() == "")
+            //{
+            //    int i = 8;
+            //}
+
             Entity entity = new Entity
             {
                 Obj = new WeakReference<Base>(obj),
@@ -259,6 +270,10 @@ namespace EntityExtensionForORM
                 Order = Entities.Count,
                 State = state
             };
+            if(state == Entity.EntityState.Added || state == Entity.EntityState.Deleted || state == Entity.EntityState.Modified)
+            {
+                entity.HardReference = obj;
+            }
             Entities.Add(id, entity);
         }
 
