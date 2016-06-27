@@ -1,6 +1,8 @@
 ﻿
 using SQLite.Net;
+using SQLite.Net.Attributes;
 using System;
+using System.Text;
 
 namespace EntityExtensionForORM
 {
@@ -10,7 +12,16 @@ namespace EntityExtensionForORM
             get;
             set; }
 
+        [Ignore]
         public Guid guid { get { return new Guid(id); } }
+        [Ignore]
+        public string Hex { get
+            {
+                StringBuilder hex = new StringBuilder(id.Length * 2);
+                foreach (byte b in id)  hex.AppendFormat("{0:x2}", b);
+                return "X'"+hex.ToString()+"'";
+            }
+        }
 
         public override string ToString() => id == null ? Guid.Empty.ToString() : new Guid(id).ToString();
         public static bool operator != (UUID u1,UUID u2) => !Equals(u1,u2);
@@ -32,7 +43,7 @@ namespace EntityExtensionForORM
         public UUID(string id_)
         {
             Guid t;
-            if (Guid.TryParse(id_,out t)) throw new FormatException("Inavlid UUID string in constructor");
+            if (!Guid.TryParse(id_,out t)) throw new FormatException("Inavlid UUID string in constructor");
             id = t.ToByteArray();
         }
 
