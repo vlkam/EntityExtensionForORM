@@ -19,6 +19,11 @@ namespace EntityExtensionForORM
         public Guid Id = Guid.NewGuid();
 
         //List<Entity> Changes => entities.Values.Where(x => x.State != Entity.EntityState.Unchanged).ToList();
+        // For debug purpose
+        List<Entity> ModifiedEntities { get { return Entities.Where(x => x.Value.State == Entity.EntityState.Modified).Select(x=>x.Value).ToList(); } }
+        List<Entity> AddedEntities { get { return Entities.Where(x => x.Value.State == Entity.EntityState.Added).Select(x=>x.Value).ToList(); } }
+        List<Entity> DeletedEntities { get { return Entities.Where(x => x.Value.State == Entity.EntityState.Deleted).Select(x=>x.Value).ToList(); } }
+        //List<Entity> ChangedEntities { get { return Entities.Where(x => x.Value.State == Entity.EntityState.Deleted || x.Value.State == Entity.EntityState.Added || x.Value.State == Entity.EntityState.Detached || x.Value.State == Entity.EntityState.Modified).Select(x=>x.Value).ToList(); } }
 
         public DbContext(DbConnect DbConnect_)
         {
@@ -154,7 +159,7 @@ namespace EntityExtensionForORM
                                         // Creates a new copy of source object for add to another context
                                         Base new_obj = (Base)Activator.CreateInstance(ti.Type);
                                         foreach(ColumnInfo tcli in ti.Columns.Values) {
-                                            if (tcli.IgnoreAttibute) continue;
+                                            if (tcli.IgnoreAttribute) continue;
                                             tcli.Property.SetValue(new_obj,tcli.Property.GetValue(source_obj));
                                         }
                                         owner_collection.Add(new_obj);
@@ -240,6 +245,12 @@ namespace EntityExtensionForORM
         public void AttachToDBContext(Base obj,Type type,Entity.EntityState state)
         {
             if (obj == null) throw new Exception("Cannot add to DB null object");
+
+            // Debug
+            if(type.ToString() == "OpenLearningPlayer.Shared.Domain.LearnedWord")
+            {
+                int dfd = 9;
+            }
 
             if (obj.DBContext != null)
             {
@@ -361,6 +372,7 @@ namespace EntityExtensionForORM
             if (entity.State == Entity.EntityState.Deleted) return;
 
             entity.State = Entity.EntityState.Deleted;
+            entity.HardReference = obj;
 
             TableInfo ti = DBschema.GetTable(type);
             foreach(ColumnInfo ci in ti.Columns.Where(x => x.Value.CascadeDeleteAttribute).Select(x => x.Value).ToList())

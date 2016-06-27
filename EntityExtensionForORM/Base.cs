@@ -43,7 +43,7 @@ namespace EntityExtensionForORM
             if (!DBContext.DBschema.Tables.TryGetValue(type, out ti)) throw new Exception("Table for type " + type + " not found");
             foreach(ColumnInfo ci in ti.Columns.Values)
             {
-                if (ci.IgnoreAttibute) continue;
+                if (ci.IgnoreAttribute) continue;
                 ci.Property.SetValue(this,ci.Property.GetValue(obj));
             }
             isSynchronization = false;

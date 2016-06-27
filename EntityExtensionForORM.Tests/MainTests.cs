@@ -239,5 +239,20 @@ namespace EntityExtensionForORM.Tests
 
         }
 
+        [TestMethod]
+        public void ColumnsAsString()
+        {
+            DbContext db = RecreateDB("ColumnsAsString.db");
+
+            Assert.IsTrue(db.DBschema.GetTable<User>().SQLColumnsAsString == "Name,UserType_id,Statistics,id");
+            Assert.IsTrue(db.DBschema.GetTable<User>().SQLColumnsAsStringWithoutPrivateData == "Name,UserType_id,id");
+
+
+            
+
+            db.Close();
+
+        }
+
     }
 }

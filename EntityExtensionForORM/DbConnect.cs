@@ -60,7 +60,12 @@ namespace EntityExtensionForORM
                     {
                         if (customattr.AttributeType == typeof(IgnoreAttribute))
                         {
-                            ci.IgnoreAttibute = true;
+                            ci.IgnoreAttribute = true;
+                            continue;
+                        }
+                        if(customattr.AttributeType == typeof(PrivateData))
+                        {
+                            ci.PrivateDataAttribute = true;
                             continue;
                         }
                         if (customattr.AttributeType == typeof(CascadeDeleteAttribute))

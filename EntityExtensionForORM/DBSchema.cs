@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 
 namespace EntityExtensionForORM
 {
@@ -21,6 +22,13 @@ namespace EntityExtensionForORM
             return res ? tbl : null;
         }
 
+        public TableInfo GetTable<T>()
+        {
+            TableInfo tbl;
+            bool res = Tables.TryGetValue(typeof(T), out tbl);
+            return res ? tbl : null;
+        }
+
     }
 
     public class TableInfo
@@ -31,6 +39,35 @@ namespace EntityExtensionForORM
         public TypeInfo TypeInfo;
 
         public Dictionary<string, ColumnInfo> Columns;
+
+        string SQLColumnsAsString_func(bool includeprivateinfo) {
+            StringBuilder sb = new StringBuilder(); ;
+            bool firststep = true;
+            foreach(ColumnInfo column in Columns.Values)
+            {
+                if (column.IgnoreAttribute || column.NotMapped) continue;
+                if (!includeprivateinfo && column.PrivateDataAttribute) continue;
+                sb.Append(firststep ? "" : ",");
+                sb.Append(column.SqlName);
+                firststep = false;
+            }
+            return sb.ToString();
+        }
+
+        public string SQLColumnsAsString {
+            get {
+                if(_SQLColumnsAsString == null) _SQLColumnsAsString = SQLColumnsAsString_func(true);
+                return _SQLColumnsAsString;
+            } }
+        string _SQLColumnsAsString;
+
+        public string SQLColumnsAsStringWithoutPrivateData {
+            get {
+                if(_SQLColumnsAsStringWithoutPrivateData == null) _SQLColumnsAsStringWithoutPrivateData = SQLColumnsAsString_func(false);
+                return _SQLColumnsAsStringWithoutPrivateData;
+            } }
+        string _SQLColumnsAsStringWithoutPrivateData;
+
 
         public TableInfo()
         {
@@ -53,7 +90,7 @@ namespace EntityExtensionForORM
 
     public class ColumnInfo
     {
-        public string ClrName {get; set;}
+        public string ClrName;
         public string SqlName;
 
         public TableInfo Table;
@@ -67,7 +104,8 @@ namespace EntityExtensionForORM
 
         public bool CascadeDeleteAttribute = false;
         public bool NotMapped = false;
-        public bool IgnoreAttibute = false;
+        public bool IgnoreAttribute = false;
+        public bool PrivateDataAttribute = false;
 
         public bool InversePropertyAttribute = false;
         public string InversePropertyName;

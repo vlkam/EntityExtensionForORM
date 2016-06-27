@@ -22,6 +22,10 @@ namespace EntityExtensionForORM.Tests
         [Ignore][InverseProperty("User")][CascadeDelete]
         public ObservableCollection<UserRole> UserRoles { get { return GetCollection(ref UserRoles_); } set { SetCollection(ref UserRoles_, value); } } private ObservableCollection<UserRole> UserRoles_;
 
+        [PrivateData]
+        public string Statistics { get { return Get(ref Statistics_); } set { Set(ref Statistics_, value); } }
+        private string Statistics_;
+
         public User() : base() {
             UserRoles = new ObservableCollection<UserRole>();
             //UserRoles.CollectionChanged += UserRoles_CollectionChanged;
