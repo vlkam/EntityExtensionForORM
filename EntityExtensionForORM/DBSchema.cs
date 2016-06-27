@@ -40,34 +40,32 @@ namespace EntityExtensionForORM
 
         public Dictionary<string, ColumnInfo> Columns;
 
-        string SQLColumnsAsString_func(bool includeprivateinfo) {
+        public string SQLColumnsAsString(bool includePrivateData) {
+            if (includePrivateData)
+            {
+                if (_SQLColumnsAsString == null) _SQLColumnsAsString = SQLColumnsAsString_(includePrivateData);
+                return _SQLColumnsAsString;
+            } else
+            {
+                if(_SQLColumnsAsStringWithoutPrivateData == null) _SQLColumnsAsStringWithoutPrivateData = SQLColumnsAsString_(includePrivateData);
+                return _SQLColumnsAsStringWithoutPrivateData;
+            }
+        }
+        string SQLColumnsAsString_(bool includePrivateData) {
             StringBuilder sb = new StringBuilder(); ;
             bool firststep = true;
             foreach(ColumnInfo column in Columns.Values)
             {
                 if (column.IgnoreAttribute || column.NotMapped) continue;
-                if (!includeprivateinfo && column.PrivateDataAttribute) continue;
+                if (!includePrivateData && column.PrivateDataAttribute) continue;
                 sb.Append(firststep ? "" : ",");
                 sb.Append(column.SqlName);
                 firststep = false;
             }
             return sb.ToString();
         }
-
-        public string SQLColumnsAsString {
-            get {
-                if(_SQLColumnsAsString == null) _SQLColumnsAsString = SQLColumnsAsString_func(true);
-                return _SQLColumnsAsString;
-            } }
         string _SQLColumnsAsString;
-
-        public string SQLColumnsAsStringWithoutPrivateData {
-            get {
-                if(_SQLColumnsAsStringWithoutPrivateData == null) _SQLColumnsAsStringWithoutPrivateData = SQLColumnsAsString_func(false);
-                return _SQLColumnsAsStringWithoutPrivateData;
-            } }
         string _SQLColumnsAsStringWithoutPrivateData;
-
 
         public TableInfo()
         {

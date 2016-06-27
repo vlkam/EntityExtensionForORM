@@ -244,8 +244,8 @@ namespace EntityExtensionForORM.Tests
         {
             DbContext db = RecreateDB("ColumnsAsString.db");
 
-            Assert.IsTrue(db.DBschema.GetTable<User>().SQLColumnsAsString == "Name,UserType_id,Statistics,id");
-            Assert.IsTrue(db.DBschema.GetTable<User>().SQLColumnsAsStringWithoutPrivateData == "Name,UserType_id,id");
+            Assert.IsTrue(db.DBschema.GetTable<User>().SQLColumnsAsString(true) == "Name,UserType_id,Statistics,id");
+            Assert.IsTrue(db.DBschema.GetTable<User>().SQLColumnsAsString(false) == "Name,UserType_id,id");
 
 
             

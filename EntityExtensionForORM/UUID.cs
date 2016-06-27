@@ -29,6 +29,13 @@ namespace EntityExtensionForORM
             id = id_.ToByteArray();
         }
 
+        public UUID(string id_)
+        {
+            Guid t;
+            if (Guid.TryParse(id_,out t)) throw new FormatException("Inavlid UUID string in constructor");
+            id = t.ToByteArray();
+        }
+
         public override bool Equals(object obj)
         {
             if (obj == null) return false;
