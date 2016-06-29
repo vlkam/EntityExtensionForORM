@@ -254,5 +254,25 @@ namespace EntityExtensionForORM.Tests
 
         }
 
+        [TestMethod]
+        public void AttachNewParentWithChildrenTest()
+        {
+            // Add to DB
+            DbContext db;
+            db = RecreateDB("AttachNewParentWithChildrenTest.db");
+
+            User user = new User { Name = "Alex" };
+            user.UserType = new UserType {Type = "Advanced"};
+
+            user.UserRoles.Add(new UserRole { Name = "Admin"});
+            user.UserRoles.Add(new UserRole { Name = "User"});
+            user.UserRoles.Add(new UserRole { Name = "Publisher"});
+
+            db.AddNewItemToDBContext(user);
+
+            Assert.IsTrue(db.Entities.Where(x => x.Value.State == Entity.EntityState.Added).Count() == 5);
+
+            
+        }
     }
 }

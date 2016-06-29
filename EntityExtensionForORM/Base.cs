@@ -143,9 +143,10 @@ namespace EntityExtensionForORM
         protected bool SetEntity<T>(ref T refField_,ref UUID idField_, T newRef,[CallerMemberName] string propertyName = null) where T : Base
         {
             if (EqualityComparer<T>.Default.Equals(refField_, newRef)) return false;
-            if(newRef != null)
+
+            if (newRef != null)
             {
-                Modified();
+                if (DBContext != null) Modified();
                 idField_ = newRef.id;
             } else
             {
@@ -154,7 +155,7 @@ namespace EntityExtensionForORM
             refField_ = newRef;
 
             // Is it new object
-            if (newRef != null && newRef.DBContext == null) DBContext.AddNewItemToDBContext(newRef);
+            if (DBContext != null && newRef != null && newRef.DBContext == null) DBContext.AddNewItemToDBContext(newRef);
 
             OnPropertyChanged(propertyName);
             OnPropertyChanged(propertyName + "_id");

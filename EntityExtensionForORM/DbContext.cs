@@ -236,9 +236,38 @@ namespace EntityExtensionForORM
             AttachToDBContext(obj,typeof(T), Entity.EntityState.Added);
         }
         */
-        public void AddNewItemToDBContext<T>(T obj) where T : Base => AttachToDBContext(obj, typeof(T), Entity.EntityState.Added);
+        public void AddNewItemToDBContext<T>(T obj) where T : Base => AddNewItemToDBContext(obj, typeof(T));
 
-        public void AddNewItemToDBContext(Base obj, Type type) => AttachToDBContext(obj, type, Entity.EntityState.Added);
+        public void AddNewItemToDBContext(Base obj, Type type)
+        {
+            AttachToDBContext(obj, type, Entity.EntityState.Added);
+
+            // add children elements to context
+            TableInfo ti = DBschema.GetTable(type);
+            foreach(ColumnInfo ci in ti.Columns.Values)
+            {
+                if (!ci.IgnoreAttribute) continue;
+                if (ci.InversePropertyAttribute)
+                {
+                    //collection
+                    IEnumerable coll = (IEnumerable)ci.Property.GetValue(obj);
+                    foreach(Base collobj in coll)
+                    {
+                        if(collobj != null) AddNewItemToDBContext(collobj, ci.GenericType);
+                    }
+                    continue;  
+                }
+                
+                if (ci.TypeInfo.IsSubclassOf(typeof(Base)))
+                {
+                    // property
+                    Base value = (Base)ci.Property.GetValue(obj);
+                    if(value != null) AddNewItemToDBContext(value, ci.Type);
+                    continue;
+                }
+
+            }
+        }
 
         public void AttachToDBContext<T>(T obj, Entity.EntityState state) where T : Base => AttachToDBContext(obj,typeof(T),state);
 
