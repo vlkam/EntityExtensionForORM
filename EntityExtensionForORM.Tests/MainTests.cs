@@ -271,8 +271,10 @@ namespace EntityExtensionForORM.Tests
             db.AddNewItemToDBContext(user);
 
             Assert.IsTrue(db.Entities.Where(x => x.Value.State == Entity.EntityState.Added).Count() == 5);
-
-            
+            foreach(UserRole role in user.UserRoles)
+            {
+                Assert.IsTrue(role.User_id == user.id);
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ using SQLite.Net;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Reflection;
 
@@ -244,6 +245,7 @@ namespace EntityExtensionForORM
 
             // add children elements to context
             TableInfo ti = DBschema.GetTable(type);
+            
             foreach(ColumnInfo ci in ti.Columns.Values)
             {
                 if (!ci.IgnoreAttribute) continue;
@@ -251,9 +253,19 @@ namespace EntityExtensionForORM
                 {
                     //collection
                     IEnumerable coll = (IEnumerable)ci.Property.GetValue(obj);
-                    foreach(Base collobj in coll)
+                    if (coll == null) continue;
+                    obj.InitiliazeCollection((INotifyCollectionChanged)ci.Property.GetValue(obj), ci.ClrName);
+                    TableInfo foreignKeyTable = DBschema.GetTable(ci.GenericType);
+                    ColumnInfo foreignKeyColumn = foreignKeyTable.GetColumnInfo(ci.InversePropertyName);
+                    ColumnInfo foreignKeyIdColumn = foreignKeyTable.GetColumnInfo(foreignKeyColumn.ForeignKeyName);
+                    foreach (Base collobj in coll)
                     {
-                        if(collobj != null) AddNewItemToDBContext(collobj, ci.GenericType);
+                        if (collobj != null)
+                        {
+                            AddNewItemToDBContext(collobj, ci.GenericType);
+                            // Setting a foreign key for the new object. It's a parent object UUID
+                            foreignKeyIdColumn.Property.SetValue(collobj, obj.id);
+                        }
                     }
                     continue;  
                 }
@@ -274,12 +286,6 @@ namespace EntityExtensionForORM
         public void AttachToDBContext(Base obj,Type type,Entity.EntityState state)
         {
             if (obj == null) throw new Exception("Cannot add to DB null object");
-
-            // Debug
-            if(type.ToString() == "OpenLearningPlayer.Shared.Domain.LearnedWord")
-            {
-                int dfd = 9;
-            }
 
             if (obj.DBContext != null)
             {

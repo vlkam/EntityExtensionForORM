@@ -244,7 +244,7 @@ namespace EntityExtensionForORM
             }
         }
 
-        private CollectionInfo InitiliazeCollection<T>(T collection,string propertyName) where T : INotifyCollectionChanged
+        public CollectionInfo InitiliazeCollection(INotifyCollectionChanged collection,string propertyName)
         {
 
             if (DBContext == null) throw new Exception("DbContext for "+this+" is null, collection can't be initialized");
