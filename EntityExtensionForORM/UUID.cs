@@ -8,7 +8,7 @@ namespace EntityExtensionForORM
 {
     public class UUID : ISerializable<byte[]>
     {
-        byte[] id {
+        public byte[] id {
             get;
             set; }
 
