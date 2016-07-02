@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SQLite.Net;
 using SQLite.Net.Platform.Win32;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -275,6 +276,31 @@ namespace EntityExtensionForORM.Tests
             {
                 Assert.IsTrue(role.User_id == user.id);
             }
+        }
+
+        [TestMethod]
+        public void UUIDtest()
+        {
+            UUID testUUID = new UUID("22F4916A-430D-45C3-9FB4-4958E7C5216C");
+
+            DbContext db;
+            db = RecreateDB("UUIDtest.db");
+
+            User user = new User { Name = "Peter" };
+            db.AddNewItemToDBContext(user);
+            user.id = testUUID;
+
+            db.SaveChanges();
+            db.Close();
+
+            user = null;
+            db = ConnectToDb("UUIDtest.db");
+            user = db.First<User>();
+
+            Assert.IsTrue(user.id == testUUID);
+
+            List<UUID> userid = db.GetConnectionForTestOnly().Query<UUID>("SELECT id FROM " + User.TableName);
+            Assert.IsTrue(userid[0] == testUUID,"UUIDs aren't equivalent");
         }
     }
 }
