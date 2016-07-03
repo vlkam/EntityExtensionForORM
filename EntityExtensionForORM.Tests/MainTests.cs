@@ -301,6 +301,9 @@ namespace EntityExtensionForORM.Tests
 
             List<UUID> userid = db.GetConnectionForTestOnly().Query<UUID>("SELECT id FROM " + User.TableName);
             Assert.IsTrue(userid[0] == testUUID,"UUIDs aren't equivalent");
+
+            UUID id = db.GetConnectionForTestOnly().ExecuteScalar<UUID>("SELECT id FROM " + User.TableName + " LIMIT 1");
+            Assert.IsTrue(id == testUUID,"UUIDs aren't equivalent");
         }
     }
 }
