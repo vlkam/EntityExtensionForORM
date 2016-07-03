@@ -24,6 +24,9 @@ namespace EntityExtensionForORM
             DBschema = new DBschema();
             foreach(var tableMap in TableMappings)
             {
+
+                if (!tableMap.MappedType.GetTypeInfo().IsSubclassOf(typeof(Base))) continue;
+
                 TableInfo table = new TableInfo { SqlName = tableMap.TableName,Type = tableMap.MappedType,TypeInfo = tableMap.MappedType.GetTypeInfo()};
                 DBschema.Tables.Add(tableMap.MappedType,table);
                 foreach(var columnMap in tableMap.Columns)
