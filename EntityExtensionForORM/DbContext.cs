@@ -231,16 +231,22 @@ namespace EntityExtensionForORM
             if (synchronazeContexts) SynchronizeContexts();
         }
 
-        /*
-        public void AddNewItemToDBContext<T>(T obj) where T : Base
-        {
-            AttachToDBContext(obj,typeof(T), Entity.EntityState.Added);
-        }
-        */
         public void AddNewItemToDBContext<T>(T obj) where T : Base => AddNewItemToDBContext(obj, typeof(T));
 
         public void AddNewItemToDBContext(Base obj, Type type)
         {
+
+            if (obj.IsAttachToContext()) {
+                if (obj.DBContext.Id != Id)
+                {
+                    throw new Exception("DbContext cannot be changed for object <" + this + "> because another context set already");
+                }
+                else
+                {
+                    return;
+                }
+            }
+
             AttachToDBContext(obj, type, Entity.EntityState.Added);
 
             // add children elements to context

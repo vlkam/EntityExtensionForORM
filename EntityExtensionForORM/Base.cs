@@ -49,6 +49,8 @@ namespace EntityExtensionForORM
             isSynchronization = false;
         }
 
+        public bool IsAttachToContext() => DBContext != null;
+
         public void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
