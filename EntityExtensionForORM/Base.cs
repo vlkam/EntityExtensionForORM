@@ -192,8 +192,10 @@ namespace EntityExtensionForORM
             }
 
             // Context lazy loading
-            T obj = DBContext.Find<T>(id);
-            return obj;
+            //T obj = DBContext.Find<T>(id);
+            //return obj;
+            Entity = DBContext.Find<T>(id);
+            return Entity;
         }
 #endregion
 
