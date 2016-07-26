@@ -27,9 +27,15 @@ namespace EntityExtensionForORM
 
                 if (!tableMap.MappedType.GetTypeInfo().IsSubclassOf(typeof(Base))) continue;
 
-                TableInfo table = new TableInfo { SqlName = tableMap.TableName,Type = tableMap.MappedType,TypeInfo = tableMap.MappedType.GetTypeInfo()};
+                TableInfo table = new TableInfo {
+                    SqlName = tableMap.TableName,
+                    Type = tableMap.MappedType,
+                    TypeInfo = tableMap.MappedType.GetTypeInfo(),
+                    TableMapping = tableMap
+                };
                 DBschema.Tables.Add(tableMap.MappedType,table);
-                foreach(var columnMap in tableMap.Columns)
+                byte idx = 0;
+                foreach (var columnMap in tableMap.Columns)
                 {
                     EntityExtensionForORM.ColumnInfo ci = new EntityExtensionForORM.ColumnInfo();
                     ci.ClrName = columnMap.PropertyName;
@@ -39,7 +45,7 @@ namespace EntityExtensionForORM
                     ci.Table = table;
                     ci.IsNullable = columnMap.IsNullable;
                     ci.SqlName = columnMap.Name;
-
+                    ci.Index = idx++;
                     table.Columns.Add(ci.ClrName,ci);
                 }
 

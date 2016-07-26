@@ -1,4 +1,5 @@
 ﻿
+using SQLite.Net;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -37,6 +38,8 @@ namespace EntityExtensionForORM
         public string SqlName;
         public Type Type;
         public TypeInfo TypeInfo;
+
+        public TableMapping TableMapping;
 
         public Dictionary<string, ColumnInfo> Columns;
 
@@ -112,6 +115,8 @@ namespace EntityExtensionForORM
 
         public bool ForeignKeyAttribute;
         public string ForeignKeyName;
+
+        public byte Index;
 
         public ColumnInfo()
         {
