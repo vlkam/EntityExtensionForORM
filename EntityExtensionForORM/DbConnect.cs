@@ -4,10 +4,22 @@ using SQLite.Net.Attributes;
 using SQLite.Net.Interop;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace EntityExtensionForORM
 {
+
+    class column_info_from_sqlite
+    {
+        public byte cid { get; set; }
+        public string name { get; set; }
+        public string type { get; set; }
+        public int notnull { get; set; }
+        public string dflt_value { get; set; }
+        public int pk { get; set; }
+    }
+
     public class DbConnect : SQLiteConnection
     {
         public DBschema DBschema;
@@ -21,12 +33,16 @@ namespace EntityExtensionForORM
 
         public void CreateSchema()
         {
+
             DBschema = new DBschema();
             foreach(var tableMap in TableMappings)
             {
 
                 if (!tableMap.MappedType.GetTypeInfo().IsSubclassOf(typeof(Base))) continue;
 
+                SQLiteCommand cmd =  CreateCommand("PRAGMA table_info('"+tableMap.TableName+"');");
+                List<column_info_from_sqlite> sql_columns = cmd.ExecuteDeferredQuery<column_info_from_sqlite>().ToList();
+                
                 TableInfo table = new TableInfo {
                     SqlName = tableMap.TableName,
                     Type = tableMap.MappedType,
@@ -34,7 +50,6 @@ namespace EntityExtensionForORM
                     TableMapping = tableMap
                 };
                 DBschema.Tables.Add(tableMap.MappedType,table);
-                byte idx = 0;
                 foreach (var columnMap in tableMap.Columns)
                 {
                     EntityExtensionForORM.ColumnInfo ci = new EntityExtensionForORM.ColumnInfo();
@@ -45,7 +60,10 @@ namespace EntityExtensionForORM
                     ci.Table = table;
                     ci.IsNullable = columnMap.IsNullable;
                     ci.SqlName = columnMap.Name;
-                    ci.Index = idx++;
+
+                    column_info_from_sqlite cifs = sql_columns.Find(x => x.name == ci.SqlName);
+                    ci.Index = cifs.cid;
+
                     table.Columns.Add(ci.ClrName,ci);
                 }
 
