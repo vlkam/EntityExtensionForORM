@@ -400,6 +400,16 @@ namespace EntityExtensionForORM
             return DbConnect.Table<T>();
         }
 
+        public List<T> Query<T>(string sql,bool attachToDBcontext = true) where T : Base
+        {
+            List<T> lst = DbConnect.Query<T>(sql);
+            foreach(T elm in lst)
+            {
+                if (FindObjectInCache<T>(elm.id) == null) AttachToDBContext<T>(elm,Entity.EntityState.Unchanged);
+            }
+            return lst;
+        }
+
         public void Delete<T>(T obj) where T : Base
         {
             Delete(obj, typeof(T));
