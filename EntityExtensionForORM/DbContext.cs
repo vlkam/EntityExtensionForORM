@@ -12,9 +12,8 @@ namespace EntityExtensionForORM
 
     public  class  DbContext 
     {
-        DbConnect DbConnect;
+        public DbConnect DbConnect;
         public DBschema DBschema; 
-        public SQLiteConnection GetConnectionForTestOnly() { return DbConnect; }
         
         public Dictionary<UUID,Entity> Entities = new Dictionary<UUID, Entity>();
         public Guid Id = Guid.NewGuid();
