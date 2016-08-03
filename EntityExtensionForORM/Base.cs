@@ -235,7 +235,7 @@ namespace EntityExtensionForORM
 
                             if (collection_info.InversePropertyInfo.CascadeDeleteAttribute)
                             {
-                                DBContext.Delete(obj, collection_info.InversePropertyInfo.Type);
+                                DBContext.Delete(obj, collection_info.InversePropertyInfo.GenericType);
                             }
                         }
                         break;
@@ -254,7 +254,12 @@ namespace EntityExtensionForORM
             if (DBContext == null) throw new Exception("DbContext for "+this+" is null, collection can't be initialized");
             if (collection == null) throw new Exception("Collection is null");
 
-            CollectionInfo ci = new CollectionInfo();
+            CollectionInfo ci;
+
+            ci = Collections.FirstOrDefault(x=>x.Collection == collection);
+            if (ci != null) return ci;
+
+            ci = new CollectionInfo();
             ci.Collection = collection;
             ci.isLoadedFromDB = false;
 
@@ -335,7 +340,7 @@ namespace EntityExtensionForORM
                     SQLite.Net.TableMapping tablemapping = new SQLite.Net.TableMapping(item.DependentTableInfo.Type,item.DependentTableInfo.Type.GetRuntimeProperties());
                     string sql = "select * from " + item.DependentTableInfo.SqlName + " where "+item.KeyIdProperytInfo.SqlName + " = ?";
 
-                    List<object> items = DBContext.GetConnectionForTestOnly().Query(tablemapping,sql,this.id);
+                    List<object> items = DBContext.DbConnect.Query(tablemapping,sql,this.id);
                     foreach(Base coll_item in items)
                     {
                         DBContext.AttachToDBContext(coll_item, item.DependentTableInfo.Type,Entity.EntityState.Unchanged);

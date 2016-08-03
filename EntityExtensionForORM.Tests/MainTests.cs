@@ -37,7 +37,7 @@ namespace EntityExtensionForORM.Tests
         {
             DbContext db = RecreateDB("DBConnectTest.db");
 
-            SQLiteConnection connect = db.GetConnectionForTestOnly();
+            SQLiteConnection connect = db.DbConnect;
             connect.Insert(new User { Name = "Test user" });
 
             // add a user 
@@ -190,9 +190,9 @@ namespace EntityExtensionForORM.Tests
 
             user = db.Find<User>(userid);
             Assert.IsNull(user);
-            Assert.IsTrue(db.GetConnectionForTestOnly().Table<User>().Count() == 0);
-            Assert.IsTrue(db.GetConnectionForTestOnly().Table<UserRole>().Count() == 0);
-            Assert.IsTrue(db.GetConnectionForTestOnly().Table<UserType>().Count() == 0);
+            Assert.IsTrue(db.DbConnect.Table<User>().Count() == 0);
+            Assert.IsTrue(db.DbConnect.Table<UserRole>().Count() == 0);
+            Assert.IsTrue(db.DbConnect.Table<UserType>().Count() == 0);
         }
 
         [TestMethod]
@@ -299,11 +299,33 @@ namespace EntityExtensionForORM.Tests
 
             Assert.IsTrue(user.id == testUUID);
 
-            List<UUID> userid = db.GetConnectionForTestOnly().Query<UUID>("SELECT id FROM " + User.TableName);
+            List<UUID> userid = db.DbConnect.Query<UUID>("SELECT id FROM " + User.TableName);
             Assert.IsTrue(userid[0] == testUUID,"UUIDs aren't equivalent");
 
-            UUID id = db.GetConnectionForTestOnly().ExecuteScalar<UUID>("SELECT id FROM " + User.TableName + " LIMIT 1");
+            UUID id = db.DbConnect.ExecuteScalar<UUID>("SELECT id FROM " + User.TableName + " LIMIT 1");
             Assert.IsTrue(id == testUUID,"UUIDs aren't equivalent");
         }
+
+        [TestMethod]
+        public void CollectionItemDeleteTest()
+        {
+            DbContext db;
+            db = RecreateDB("CollectionItemDeleteTest.db");
+
+            User user = new User { Name = "Alex" };
+            user.UserType = new UserType {Type = "Advanced"};
+
+            user.UserRoles.Add(new UserRole { Name = "Admin"});
+            user.UserRoles.Add(new UserRole { Name = "User"});
+            user.UserRoles.Add(new UserRole { Name = "Publisher"});
+
+            db.AddNewItemToDBContext(user);
+
+            UserRole r = user.UserRoles.First(x => x.Name == "User");
+            user.UserRoles.Remove(r);
+
+            Assert.IsTrue(db.Entities.Where(x => x.Value.State == Entity.EntityState.Deleted).Count() == 1);
+        }
+
     }
 }

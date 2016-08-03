@@ -227,6 +227,10 @@ namespace EntityExtensionForORM
                         throw new Exception("Unknown operation type "+entity.State);
                 }
             }
+
+            // Removes references to deleted object
+            foreach (UUID id in Entities.Where(x => x.Value.State == Entity.EntityState.Deleted).Select(x=>x.Key).ToList()) Entities.Remove(id);
+
             if (synchronazeContexts) SynchronizeContexts();
         }
 
@@ -259,7 +263,9 @@ namespace EntityExtensionForORM
                     //collection
                     IEnumerable coll = (IEnumerable)ci.Property.GetValue(obj);
                     if (coll == null) continue;
+
                     obj.InitiliazeCollection((INotifyCollectionChanged)ci.Property.GetValue(obj), ci.ClrName);
+
                     TableInfo foreignKeyTable = DBschema.GetTable(ci.GenericType);
                     ColumnInfo foreignKeyColumn = foreignKeyTable.GetColumnInfo(ci.InversePropertyName);
                     ColumnInfo foreignKeyIdColumn = foreignKeyTable.GetColumnInfo(foreignKeyColumn.ForeignKeyName);
