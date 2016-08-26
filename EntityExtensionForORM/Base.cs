@@ -343,9 +343,16 @@ namespace EntityExtensionForORM
                     List<object> items = DBContext.DbConnect.Query(tablemapping,sql,this.id);
                     foreach(Base coll_item in items)
                     {
-                        DBContext.AttachToDBContext(coll_item, item.DependentTableInfo.Type,Entity.EntityState.Unchanged);
-                        CollectionField_.Add(Convert.ChangeType(coll_item,item.DependentTableInfo.Type));
-                        //DBContext.AttachToDBContext(Convert.ChangeType(coll_item, item.CollectionItemType),Entity.EntityState.Unchanged);
+                        Base objfromcache = DBContext.FindObjectInCache(item.DependentTableInfo.Type,coll_item.id);
+                        if(objfromcache == null)
+                        {
+                            DBContext.AttachToDBContextInternal(coll_item, item.DependentTableInfo.Type,Entity.EntityState.Unchanged);
+                            CollectionField_.Add(Convert.ChangeType(coll_item,item.DependentTableInfo.Type));
+                        }
+                        else
+                        {
+                            CollectionField_.Add(Convert.ChangeType(objfromcache,item.DependentTableInfo.Type));
+                        }
                     }
 
                     item.isLoadedFromDB = true;

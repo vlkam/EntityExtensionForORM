@@ -10,15 +10,15 @@ namespace EntityExtensionForORM.Tests
     {
         public const string TableName = "Users";
 
-        // properties
+        // Property
         public string Name { get { return Get(ref Name_); } set { Set(ref Name_, value); } } private string Name_;
-        //public string Name { get; set; }
         
-        // reference properties
+        // Reference property
         public UUID UserType_id { get { return GetEntityId(ref UserType_id_); } set { SetEntityId(ref UserType_id_, value); }} private UUID UserType_id_;
         [Ignore][CascadeDelete]
         public UserType UserType { get { return GetEntity(ref UserType_,ref UserType_id_); } set { SetEntity(ref UserType_,ref UserType_id_,value); }} private UserType UserType_;
         
+        // Navigation property
         [Ignore][InverseProperty("User")][CascadeDelete]
         public ObservableCollection<UserRole> UserRoles { get { return GetCollection(ref UserRoles_); } set { SetCollection(ref UserRoles_, value); } } private ObservableCollection<UserRole> UserRoles_;
 
@@ -28,18 +28,8 @@ namespace EntityExtensionForORM.Tests
 
         public User() : base() {
             UserRoles = new ObservableCollection<UserRole>();
-            //UserRoles.CollectionChanged += UserRoles_CollectionChanged;
         }
 
-        //Add	An item was added to the collection.
-        //Move An item was moved within the collection.
-        //Remove	An item was removed from the collection.
-        //Replace	An item was replaced in the collection.
-        //Reset	The content of the collection was cleared.
-        private void UserRoles_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            //throw new NotImplementedException();
-        }
     }
 
     [Table(TableName)]
@@ -62,6 +52,9 @@ namespace EntityExtensionForORM.Tests
         public UUID User_id { get; set; }
         [ForeignKey("User_id")][Ignore]
         public User User { get; set; }
+
+        [Ignore]
+        public Guid internal_id { get; set; }
 
         public UserRole() : base() { }
     }

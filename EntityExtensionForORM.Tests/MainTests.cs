@@ -31,6 +31,53 @@ namespace EntityExtensionForORM.Tests
             return ConnectToDb(basename);
         }
 
+        [TestMethod]
+        public void CacheCollectionTest()
+        {
+            DbContext db;
+            db = RecreateDB("CacheCollectionTest.db");
+
+            User user = new User { Name = "Alex" };
+            user.UserType = new UserType {Type = "Advanced"};
+
+            UserRole adm = new UserRole { Name = "Admin" };
+            user.UserRoles.Add(adm);
+            UserRole usr = new UserRole { Name = "User" };
+            user.UserRoles.Add(usr);
+            UserRole pub = new UserRole { Name = "Publisher" };
+            user.UserRoles.Add(pub);
+
+            db.AddNewItemToDBContext(user);
+            db.SaveChanges();
+            db.Close();
+
+            db = ConnectToDb("CacheCollectionTest.db");
+            User user1 = db.FirstOrDefault<User>();
+            UserRole ur1 = db.FirstOrDefault<UserRole>("Name = 'User'");
+            ur1.internal_id = new Guid();
+            Assert.IsTrue(user1.UserRoles.FirstOrDefault(x=>x.Name == "User").internal_id == ur1.internal_id);
+        }
+
+        [TestMethod]
+        public void FirstOrDefaultTest()
+        {
+            DbContext db;
+            db = RecreateDB("FirstOrDefaultTest.db");
+
+            User user = new User { Name = "Alex" };
+            user.UserType = new UserType {Type = "Advanced"};
+
+            user.UserRoles.Add(new UserRole { Name = "Admin"});
+            user.UserRoles.Add(new UserRole { Name = "User"});
+            user.UserRoles.Add(new UserRole { Name = "Publisher"});
+
+            db.AddNewItemToDBContext(user);
+            db.SaveChanges();
+
+            UserRole ur = db.FirstOrDefault<UserRole>("Name = 'User'");
+            Assert.IsTrue(ur.Name == "User");
+        }
+
 
         [TestMethod]
         public void DBConnectTestMethod()
@@ -128,7 +175,7 @@ namespace EntityExtensionForORM.Tests
             user = null;
 
             db = ConnectToDb("SaveChanges_and_LazyLoading.db");
-            user = db.First<User>();
+            user = db.FirstOrDefault<User>();
 
             Assert.IsTrue(user.UserType.Type == "Cool");
 
@@ -209,7 +256,8 @@ namespace EntityExtensionForORM.Tests
             ctx1.SaveChanges();
 
             DbContext ctx2 = new DbContext(con);
-            User usr2 = ctx2.FirstOrDefault<User>(x => x.Name == "Alex");
+            //User usr2 = ctx2.FirstOrDefault<User>(x => x.Name == "Alex");
+            User usr2 = ctx2.FirstOrDefault<User>("Name = 'Alex'");
             Assert.IsNotNull(usr2);
             Assert.IsTrue(usr2.Name == "Alex");
             Assert.IsTrue(usr1.id == usr2.id);
@@ -295,7 +343,7 @@ namespace EntityExtensionForORM.Tests
 
             user = null;
             db = ConnectToDb("UUIDtest.db");
-            user = db.First<User>();
+            user = db.FirstOrDefault<User>();
 
             Assert.IsTrue(user.id == testUUID);
 

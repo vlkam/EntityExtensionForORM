@@ -32,7 +32,7 @@ namespace EntityExtensionForORM
             DbConnect.Contexts.Add(new WeakReference<DbContext>(this));
         }
 
-        public T FindObjectInCache<T>(UUID id) where T : Base
+        public Base FindObjectInCache(Type type,UUID id)
         {
             Entity entity;
             if (!Entities.TryGetValue(id,out entity)) return null;
@@ -44,8 +44,10 @@ namespace EntityExtensionForORM
                 Entities.Remove(id);
                 return null;
             }
-            return (T)obj;
+            return obj;
         }
+
+        public T FindObjectInCache<T>(UUID id) where T : Base => (T)FindObjectInCache(typeof(T), id);
 
         public Entity FindEntityInCache(UUID id)
         {
@@ -250,7 +252,7 @@ namespace EntityExtensionForORM
                 }
             }
 
-            AttachToDBContext(obj, type, Entity.EntityState.Added);
+            AttachToDBContextInternal(obj, type, Entity.EntityState.Added);
 
             // add children elements to context
             TableInfo ti = DBschema.GetTable(type);
@@ -292,9 +294,12 @@ namespace EntityExtensionForORM
             }
         }
 
-        public void AttachToDBContext<T>(T obj, Entity.EntityState state) where T : Base => AttachToDBContext(obj,typeof(T),state);
+ 
+        // Internal
+        public void AttachToDBContextInternal<T>(T obj, Entity.EntityState state) where T : Base => AttachToDBContextInternal(obj,typeof(T),state);
 
-        public void AttachToDBContext(Base obj,Type type,Entity.EntityState state)
+        // Internal
+        public void AttachToDBContextInternal(Base obj,Type type,Entity.EntityState state)
         {
             if (obj == null) throw new Exception("Cannot add to DB null object");
 
@@ -334,92 +339,54 @@ namespace EntityExtensionForORM
             Entities.Add(id, entity);
         }
 
-        public void Insert<T>(T obj) where T: Base
+        // for example condititon  "code = 'RUS'"
+        public T FirstOrDefault<T>(string condition = null) where T : Base
         {
-            DbConnect.Insert(obj);
-            Entity entity;
-            if (!Entities.TryGetValue(obj.id, out entity)) AttachToDBContext(obj,Entity.EntityState.Unchanged);
+            string sql = "SELECT id FROM " + DBschema.GetTable<T>().SqlName;
+            if (!string.IsNullOrEmpty(condition)) sql += " WHERE " + condition;
+            sql += " LIMIT 1";
+            
+            UUID id = DbConnect.ExecuteScalar<UUID>(sql);
+            if (id == null) return null;
+            return Find<T>(id);
         }
 
-        public T FirstOrDefault<T>(Func<T,bool> predicate,bool attachToContext = true) where T : Base
-        {
-            T obj = DbConnect.Table<T>().FirstOrDefault(predicate);
-            if (obj != null && attachToContext) AttachToDBContext(obj, Entity.EntityState.Unchanged);
-            return obj;
-        }
 
-        public List<T> Set<T>(bool attachToContext = false) where T : Base
+        public T Find<T>(UUID id) where T : Base
         {
-            List<T> lst = DbConnect.Table<T>().ToList();
-            if (attachToContext)
-            {
-                foreach(var elm in lst)
-                {
-                    AttachToDBContext(elm, Entity.EntityState.Unchanged);
-                }
-            }
-            return lst;
-        }
-
-        public T Find<T>(UUID id,bool AttachToContext = true) where T : Base
-        {
-            Entity entity = FindEntityInCache(id);
-
             T obj = FindObjectInCache<T>(id);
             if(obj == null)
             {
                // try to get it from db
                 obj = DbConnect.Find<T>(id);
-            }
-
-            if(AttachToContext && obj != null)
-            {
-                AttachToDBContext(obj,Entity.EntityState.Unchanged);
+                if(obj != null) AttachToDBContextInternal(obj,Entity.EntityState.Unchanged);
             }
             return obj;
         }
 
-        public T First<T>() where T : Base
+        public int Count<T>(string condition = null) where T : Base
         {
-            T obj = DbConnect.Table<T>().FirstOrDefault();
-            if (obj == null) return null;
-
-            T objc = FindObjectInCache<T>(obj.id);
-            if (objc != null) return objc;
-
-            AttachToDBContext(obj,Entity.EntityState.Unchanged);
-            return obj;
+            QueryBuilder qb = new QueryBuilder(DbConnect);
+            qb.AddField("Count(*)");
+            qb.AddFrom<T>();
+            qb.AddWhere(condition);
+            return DbConnect.ExecuteScalar<int>(qb.Sql());
         }
 
-        public T FirstOrDefault<T>() where T : Base
+        public List<T> Query<T>(QueryBuilder qb) where T : Base
         {
-            return First<T>();
-        }
-
-        public bool ObjectExists<T>(T obj) where T : Base
-        {
-            return DbConnect.Find<T>(obj.id) != null;
-        }
-
-        public TableQuery<T> Table<T>() where T : Base
-        {
-            return DbConnect.Table<T>();
-        }
-
-        public List<T> Query<T>(string sql,bool attachToDBcontext = true) where T : Base
-        {
-            List<T> lst = DbConnect.Query<T>(sql);
-            foreach(T elm in lst)
+            qb.Select = "id";
+            qb.AddFrom<T>();
+            List<UUID> idlst = DbConnect.Query<UUID>(qb.Sql());
+            List<T> lst = new List<T>();
+            foreach (UUID id in idlst)
             {
-                if (FindObjectInCache<T>(elm.id) == null) AttachToDBContext<T>(elm,Entity.EntityState.Unchanged);
+                lst.Add(Find<T>(id));
             }
             return lst;
         }
 
-        public void Delete<T>(T obj) where T : Base
-        {
-            Delete(obj, typeof(T));
-        }
+        public void Delete<T>(T obj) where T : Base => Delete(obj, typeof(T));
 
         public void Delete(Base obj,Type type)
         {
