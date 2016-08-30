@@ -45,7 +45,7 @@ namespace EntityExtensionForORM
             StringBuilder sql = new StringBuilder(1000);
             sql.Append("SELECT ");
             sql.Append(Select);
-            sql.Append("FROM ");
+            sql.Append(" FROM ");
             sql.Append(From);
             if (!string.IsNullOrEmpty(Where))
             {
