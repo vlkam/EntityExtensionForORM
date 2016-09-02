@@ -99,116 +99,15 @@ namespace EntityExtensionForORM
                     obj.DBContext = null;
                 }
             }
-            Entities.Clear();
+            ClearChanges();
         }
 
-        public void SynchronizeContexts()
-        {
-            foreach(WeakReference<DbContext> refctx in DbConnect.Contexts)
-            {
-                DbContext ctx;
-                if (!refctx.TryGetTarget(out ctx)) continue;
-                if (ctx.Id == this.Id) continue;
-
-                foreach(Entity en in Entities.Values.Where(
-                    x=>x.PreviousState == Entity.EntityState.Modified || x.PreviousState ==Entity.EntityState.Added || x.PreviousState == Entity.EntityState.Deleted))
-                {
-                    Base source_obj;
-                    if (!en.Obj.TryGetTarget(out source_obj)) throw new Exception("Can't get a weak reference for synchronize contexts");
-
-                    if(en.PreviousState == Entity.EntityState.Modified)
-                    {
-                        Entity dest_ent;
-                        if (!ctx.Entities.TryGetValue(source_obj.id, out dest_ent)) continue;
-                        Base dest_obj;
-                        if (!dest_ent.Obj.TryGetTarget(out dest_obj)) continue;
-
-                        dest_obj.SynchronizeWith(source_obj,en.Type);
-                    }
-
-                    if(en.PreviousState == Entity.EntityState.Added || en.PreviousState == Entity.EntityState.Deleted)
-                    {
-                        TableInfo ti = DbConnect.DBschema.GetTable(en.Type);
-                        foreach (ColumnInfo ci in ti.Columns.Values)
-                        {
-                            if (!ci.ForeignKeyAttribute) continue;
-
-                            // Owner's column and table
-                            TableInfo owner_ti = DBschema.GetTable(ci.Type);
-                            ColumnInfo owner_column = owner_ti.Columns.Values.FirstOrDefault(x=>x.InversePropertyName == ci.ClrName);
-                            if (owner_column == null) continue;
-
-                            // Owner's UUID
-                            PropertyInfo pi = ti.TypeInfo.GetDeclaredProperty(ci.ClrName);
-                            ColumnInfo fk_ci = ti.GetColumnInfo(ci.ForeignKeyName);
-                            UUID owner_id = (UUID)fk_ci.Property.GetValue(source_obj);
-
-                            // Owner's object
-                            Entity dest_ent = ctx.FindEntityInCache(owner_id);
-                            Base owner;
-                            if (!dest_ent.Obj.TryGetTarget(out owner)) continue;
-
-                            // Owner's collection
-                            IList owner_collection = ((IList)owner_column.Property.GetValue(owner));
-                            var owner_collection_typed = owner_collection.Cast<Base>();
-                            if (owner_collection == null) continue;
-
-                            switch (en.PreviousState)
-                            {
-                                case Entity.EntityState.Added:
-                                    if(!owner_collection_typed.Any(x=>x.id == source_obj.id))
-                                    {
-                                        // Creates a new copy of source object for add to another context
-                                        Base new_obj = (Base)Activator.CreateInstance(ti.Type);
-                                        foreach(ColumnInfo tcli in ti.Columns.Values) {
-                                            if (tcli.IgnoreAttribute) continue;
-                                            tcli.Property.SetValue(new_obj,tcli.Property.GetValue(source_obj));
-                                        }
-                                        owner_collection.Add(new_obj);
-                                    }
-                                    break;
-
-                                case Entity.EntityState.Deleted:
-                                    Base old_obj = owner_collection_typed.FirstOrDefault(x => x.id == source_obj.id);
-                                    if (old_obj != null)
-                                    {
-                                        owner_collection.Remove(old_obj);
-                                    }
-                                    break;
-                            }
-
-                            //if(en.PreviousState == Entity)
-                            //if(cc.)
-
-
-                            //IEnumerable collection =
-
-                            Base ForeignKeyValue = (Base)pi.GetValue(source_obj);
-                            //int i = 5;
-                            source_obj.GetType().GetRuntimeProperty("User");
-                            
-                        }
-                        
-                    }
-                }
-            }
-        }
-
-        public void SaveChanges(bool synchronazeContexts = false)
+        public void SaveChanges()
         {
             foreach(var keyval in Entities)
             {
                 Entity entity = keyval.Value;
                 if (entity.State == Entity.EntityState.Unchanged) continue;
-                /*
-                WeakReference<Base> refer = entity.Obj;
-                Base obj;
-                if(!refer.TryGetTarget(out obj))
-                {
-                    throw new Exception("Weakreference " + refer + " cannot be resolve. Order: " + entity.Order + " Type : " + entity.Type);
-                }
-                */
-                //Base obj = entity.HardReference;
                 switch (entity.State)
                 {
                     case Entity.EntityState.Added:
@@ -217,6 +116,7 @@ namespace EntityExtensionForORM
                         entity.PreviousState = entity.State;
                         entity.IsNeedSynchronize = true;
                         entity.State = Entity.EntityState.Unchanged;
+                        entity.HardReference.IsModified = false;
                         entity.HardReference = null;
                         break;
                     case Entity.EntityState.Deleted:
@@ -233,7 +133,6 @@ namespace EntityExtensionForORM
             // Removes references to deleted object
             foreach (UUID id in Entities.Where(x => x.Value.State == Entity.EntityState.Deleted).Select(x=>x.Key).ToList()) Entities.Remove(id);
 
-            if (synchronazeContexts) SynchronizeContexts();
         }
 
         public void AddNewItemToDBContext<T>(T obj) where T : Base => AddNewItemToDBContext(obj, typeof(T));
@@ -311,19 +210,13 @@ namespace EntityExtensionForORM
                 }
                 else
                 {
-                    //throw new Exception("Object in context allready");
-                    return;
+                    throw new Exception("Object in context already");
                 }
             }
             obj.DBContext = this;
 
             UUID id = obj.id;
             if (Entities.ContainsKey(id)) throw new Exception("Cannot add entity <"+obj+"> to DbContext because it already over there");
-
-            //if(id.guid.ToString() == "")
-            //{
-            //    int i = 8;
-            //}
 
             Entity entity = new Entity
             {

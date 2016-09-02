@@ -243,52 +243,6 @@ namespace EntityExtensionForORM.Tests
         }
 
         [TestMethod]
-        public void SyncronizationContextsTest()
-        {
-            string path = PathToDb("SyncronizationContextsTest.db");
-            if (File.Exists(path)) File.Delete(path);
-
-            UTDbConnect con = new  UTDbConnect(new SQLitePlatformWin32(), path);
-
-            DbContext ctx1 = new DbContext(con);
-            User usr1 = new User { Name = "Alex" };
-            ctx1.AddNewItemToDBContext(usr1);
-            ctx1.SaveChanges();
-
-            DbContext ctx2 = new DbContext(con);
-            //User usr2 = ctx2.FirstOrDefault<User>(x => x.Name == "Alex");
-            User usr2 = ctx2.FirstOrDefault<User>("Name = 'Alex'");
-            Assert.IsNotNull(usr2);
-            Assert.IsTrue(usr2.Name == "Alex");
-            Assert.IsTrue(usr1.id == usr2.id);
-
-            bool isChanged = false;
-            usr1.PropertyChanged += (x, e) => { isChanged = true; };
-
-            usr2.Name = "Alex!";
-
-            UserRole ur = new UserRole { Name = "Admin" };
-            var coll = usr1.UserRoles.ToList();
-            usr2.UserRoles.Add(ur);
-            bool isCollectionChanged = false;
-            usr1.UserRoles.CollectionChanged += (x, e) => { isCollectionChanged = true; };
-            Assert.IsTrue(ctx2.Entities.Count == 2);
-            
-            ctx2.SaveChanges(true);
-
-            //usr1.SynchronizeWith(usr2);
-            Assert.IsTrue(usr1.Name == "Alex!");
-            Assert.IsTrue(isChanged);
-            Assert.IsTrue(isCollectionChanged);
-
-            Entity ent = ctx1.FindEntityInCache(usr1.id);
-            Assert.IsTrue(ent.State == Entity.EntityState.Unchanged);
-            Assert.IsTrue(usr1.UserRoles[0].Name == "Admin");
-
-
-        }
-
-        [TestMethod]
         public void ColumnsAsString()
         {
             DbContext db = RecreateDB("ColumnsAsString.db");

@@ -32,9 +32,9 @@
           <![CDATA[
 // $Type$ $Name$ 
 [NotNull]
-public UUID $Name$_id { get { return GetEntityId(ref $Name$_id_); } set { SetEntityId(ref $Name$_id_, value); }} private UUID $Name$_id_;
+public UUID $Name$_id { get { return GetEntityId(ref $Name$_id_); } set { SetEntityId(ref $Name$_id_, value); }} UUID $Name$_id_;
 [Ignore][CascadeDelete][ForeignKey("$Name$_id")]
-public $Type$ $Name$ { get { return GetEntity(ref $Name$_,ref $Name$_id_); } set { SetEntity(ref $Name$_,ref $Name$_id_,value); }} private $Type$ $Name$_;]]>
+public $Type$ $Name$ { get { return GetEntity(ref $Name$_,ref $Name$_id_); } set { SetEntity(ref $Name$_,ref $Name$_id_,value); }} $Type$ $Name$_;]]>
       </Code>
     </Snippet>
 

@@ -34,21 +34,6 @@ namespace EntityExtensionForORM
             id_ = new UUID();
         }
 
-        public void SynchronizeWith<T>(T obj) where T : Base => SynchronizeWith(obj, typeof(T));
-
-        public void SynchronizeWith(Base obj,Type type)
-        {
-            isSynchronization = true;
-            TableInfo ti;
-            if (!DBContext.DBschema.Tables.TryGetValue(type, out ti)) throw new Exception("Table for type " + type + " not found");
-            foreach(ColumnInfo ci in ti.Columns.Values)
-            {
-                if (ci.IgnoreAttribute) continue;
-                ci.Property.SetValue(this,ci.Property.GetValue(obj));
-            }
-            isSynchronization = false;
-        }
-
         public bool IsAttachToContext() => DBContext != null;
 
         public void OnPropertyChanged([CallerMemberName] string propertyName = null)
@@ -90,10 +75,24 @@ namespace EntityExtensionForORM
             return property.Name;
         }
 
+        [Ignore]
+        public bool IsModified {
+            get { return _IsModified; }
+            set {
+                if(_IsModified != value)
+                {
+                    _IsModified = value;
+                    OnPropertyChanged("IsModified");
+                }
+            }
+        }
+        bool _IsModified;
+
         private void Modified()
         {
             if (DBContext != null && !isSynchronization)
             {
+                IsModified = true;
                 DBContext.RegisterChange(id, this);
             }
         }
@@ -212,12 +211,11 @@ namespace EntityExtensionForORM
                         foreach(Base obj in e.NewItems)
                         {
                             if (obj.DBContext == null) DBContext.AddNewItemToDBContext(obj,collection_info.DependentTableInfo.Type);
-                            PropertyInfo prop = collection_info.KeyIdProperytInfo.Property;//collection_info.CollectionItemTypeInfo.GetDeclaredProperty(collection_info.InversePropertyId);
+                            PropertyInfo prop = collection_info.KeyIdProperytInfo.Property;
                             UUID old_id = (UUID)prop.GetValue(obj);
                             if(old_id != this.id)
                             {
                                 obj.Modified();
-                                //obj.id = this.id;
                                 prop.SetValue(obj, this.id);
                             }
                         }
