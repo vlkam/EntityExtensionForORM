@@ -29,7 +29,6 @@ namespace EntityExtensionForORM
         {
             DbConnect = DbConnect_;
             DBschema = DbConnect.DBschema;
-            DbConnect.Contexts.Add(new WeakReference<DbContext>(this));
         }
 
         public Base FindObjectInCache(Type type,UUID id)

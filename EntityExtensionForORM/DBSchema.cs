@@ -118,6 +118,8 @@ namespace EntityExtensionForORM
 
         public byte Index;
 
+        public bool IsPrimaryKey;
+
         public ColumnInfo()
         {
         }

@@ -24,8 +24,6 @@ namespace EntityExtensionForORM
     {
         public DBschema DBschema;
 
-        public List<WeakReference<DbContext>> Contexts = new List<WeakReference<DbContext>>();
-
         public DbConnect(ISQLitePlatform platform,string path) : base (platform,path)
         {
             ExtraTypeMappings.Add(typeof(UUID), "blob");
@@ -60,6 +58,7 @@ namespace EntityExtensionForORM
                     ci.Table = table;
                     ci.IsNullable = columnMap.IsNullable;
                     ci.SqlName = columnMap.Name;
+                    ci.IsPrimaryKey = ci.ClrName == "id";
 
                     column_info_from_sqlite cifs = sql_columns.Find(x => x.name == ci.SqlName);
                     ci.Index = cifs.cid;
@@ -126,17 +125,5 @@ namespace EntityExtensionForORM
             }
         }
 
-        public void SynchronizeContexts(DbContext context)
-        {
-            foreach(WeakReference<DbContext> weakref in Contexts)
-            {
-                DbContext ctx;
-                if (!weakref.TryGetTarget(out ctx)) continue;
-                if (ctx.Id == context.Id) continue;
-
-                //foreach()
-
-            }
-        }
     }
 }

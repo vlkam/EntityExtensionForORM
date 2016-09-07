@@ -51,6 +51,22 @@ namespace EntityExtensionForORM
             }
         }
 
+        public void RefreshFromDB() 
+        {
+            if (!IsAttachToContext()) throw new Exception("Object "+this+" isn't attached to context");
+
+            TableInfo ti = DBContext.DBschema.GetTable(this.GetType());
+            Base obj_fromDB = (Base)DBContext.DbConnect.Find(id,ti.TableMapping);
+            
+            foreach(var pair in ti.Columns)
+            {
+                ColumnInfo fi = pair.Value;
+                if (fi.NotMapped || fi.IsPrimaryKey) continue;
+                fi.Property.SetValue(this, fi.Property.GetValue(obj_fromDB));
+            }
+           
+        }
+
         public static string GetPropertyName<T>(Expression<Func<T>> propertyExpression)
         {
             if (propertyExpression == null)

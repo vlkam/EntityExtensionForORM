@@ -281,6 +281,31 @@ namespace EntityExtensionForORM.Tests
         }
 
         [TestMethod]
+        public void RefreshFromDBTest()
+        {
+            // Add to DB
+            DbContext db;
+            db = RecreateDB("RefreshFromDBTest.db");
+
+            User user = new User { Name = "Alex",Statistics = "101" };
+            user.UserType = new UserType {Type = "Advanced"};
+
+            db.AddNewItemToDBContext(user);
+            db.SaveChanges();
+
+            User us1 = db.DbConnect.Find<User>(user.id);
+            us1.Name = "Victor";
+            us1.Statistics = "202";
+            db.DbConnect.InsertOrReplace(us1);
+
+            user.RefreshFromDB();
+
+            Assert.IsTrue(user.Name == us1.Name);
+            Assert.IsTrue(user.Statistics == us1.Statistics);
+
+        }
+
+        [TestMethod]
         public void UUIDtest()
         {
             UUID testUUID = new UUID("22F4916A-430D-45C3-9FB4-4958E7C5216C");
