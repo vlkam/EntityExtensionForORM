@@ -19,11 +19,10 @@ namespace EntityExtensionForORM
         public Guid Id = Guid.NewGuid();
 
         //List<Entity> Changes => entities.Values.Where(x => x.State != Entity.EntityState.Unchanged).ToList();
-        // For debug purpose
-        List<Entity> ModifiedEntities { get { return Entities.Where(x => x.Value.State == Entity.EntityState.Modified).Select(x=>x.Value).ToList(); } }
-        List<Entity> AddedEntities { get { return Entities.Where(x => x.Value.State == Entity.EntityState.Added).Select(x=>x.Value).ToList(); } }
-        List<Entity> DeletedEntities { get { return Entities.Where(x => x.Value.State == Entity.EntityState.Deleted).Select(x=>x.Value).ToList(); } }
-        //List<Entity> ChangedEntities { get { return Entities.Where(x => x.Value.State == Entity.EntityState.Deleted || x.Value.State == Entity.EntityState.Added || x.Value.State == Entity.EntityState.Detached || x.Value.State == Entity.EntityState.Modified).Select(x=>x.Value).ToList(); } }
+        public List<Entity> ModifiedEntities { get { return Entities.Where(x => x.Value.State == Entity.EntityState.Modified).Select(x=>x.Value).ToList(); } }
+        public List<Entity> AddedEntities { get { return Entities.Where(x => x.Value.State == Entity.EntityState.Added).Select(x=>x.Value).ToList(); } }
+        public List<Entity> DeletedEntities { get { return Entities.Where(x => x.Value.State == Entity.EntityState.Deleted).Select(x=>x.Value).ToList(); } }
+        public List<Entity> ChangedEntities { get { return Entities.Where(x => x.Value.State == Entity.EntityState.Deleted || x.Value.State == Entity.EntityState.Added || x.Value.State == Entity.EntityState.Detached || x.Value.State == Entity.EntityState.Modified).Select(x=>x.Value).ToList(); } }
 
         public DbContext(DbConnect DbConnect_)
         {
@@ -80,7 +79,30 @@ namespace EntityExtensionForORM
 
         public void ClearChanges()
         {
-            Entities.Clear();
+            //Entities.Clear();
+            foreach(var entity in ChangedEntities)
+            {
+                switch (entity.State)
+                {
+                    case Entity.EntityState.Unchanged:
+                        break;
+                    case Entity.EntityState.Added:
+                        Entities.Remove(entity.HardReference.id);
+                        entity.HardReference = null;
+                        break;
+                    case Entity.EntityState.Modified:
+                        entity.State = Entity.EntityState.Unchanged;
+                        entity.HardReference = null;
+                        break;
+                    case Entity.EntityState.Deleted:
+                        entity.State = Entity.EntityState.Unchanged;
+                        entity.HardReference = null;
+                        break;
+                    default:
+                        throw new Exception("RegisterChange<T> : Entity status is invalid");
+                }
+
+            }
         }
 
         public bool HasChanges()
@@ -112,16 +134,12 @@ namespace EntityExtensionForORM
                     case Entity.EntityState.Added:
                     case Entity.EntityState.Modified:
                         DbConnect.InsertOrReplace(entity.HardReference, entity.Type);
-                        entity.PreviousState = entity.State;
-                        entity.IsNeedSynchronize = true;
                         entity.State = Entity.EntityState.Unchanged;
                         entity.HardReference.IsModified = false;
                         entity.HardReference = null;
                         break;
                     case Entity.EntityState.Deleted:
                         DbConnect.Delete(entity.HardReference);
-                        entity.PreviousState = entity.State;
-                        entity.IsNeedSynchronize = true;
                         entity.HardReference = null;
                         break;
                     default:

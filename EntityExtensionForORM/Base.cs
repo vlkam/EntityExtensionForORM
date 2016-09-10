@@ -23,8 +23,6 @@ namespace EntityExtensionForORM
 
         public DbContext DBContext;
 
-        bool isSynchronization = false;
-
         List<CollectionInfo> Collections = new List<CollectionInfo>();
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -106,7 +104,7 @@ namespace EntityExtensionForORM
 
         private void Modified()
         {
-            if (DBContext != null && !isSynchronization)
+            if (DBContext != null)
             {
                 IsModified = true;
                 DBContext.RegisterChange(id, this);
