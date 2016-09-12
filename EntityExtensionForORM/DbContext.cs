@@ -1,11 +1,9 @@
 ﻿
-using SQLite.Net;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Reflection;
 
 namespace EntityExtensionForORM
 {
@@ -308,7 +306,15 @@ namespace EntityExtensionForORM
             entity.HardReference = obj;
 
             TableInfo ti = DBschema.GetTable(type);
-            foreach(ColumnInfo ci in ti.Columns.Where(x => x.Value.CascadeDeleteAttribute).Select(x => x.Value).ToList())
+
+            // Updates owners's collection
+            foreach (ColumnInfo ci in ti.Columns.Where(x => x.Value.ForeignKeyAttribute).Select(x => x.Value).ToList())
+            {
+                ci.Property.SetValue(obj,null);
+            }
+
+            // Cascade delete
+            foreach (ColumnInfo ci in ti.Columns.Where(x => x.Value.CascadeDeleteAttribute).Select(x => x.Value).ToList())
             {
 
                 // Collection
@@ -319,6 +325,7 @@ namespace EntityExtensionForORM
                         if(elm != null) Delete(elm,ci.GenericType);
                     }
                 }
+
                 // Property
                 else
                 {
@@ -327,6 +334,7 @@ namespace EntityExtensionForORM
                 }
 
             }
+
         }
 
         public void DeleteRange<T>(IEnumerable<T> lst) where T : Base

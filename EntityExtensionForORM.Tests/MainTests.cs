@@ -32,6 +32,54 @@ namespace EntityExtensionForORM.Tests
         }
 
         [TestMethod]
+        public void UpdateCollectionTest()
+        {
+            DbContext db;
+            db = RecreateDB("UpdateCollectionTest.db");
+
+            User user = new User { Name = "Alex" };
+            db.AddNewItemToDBContext(user);
+            int i = user.UserRoles.Count();
+
+            bool isCollectionChanged = false;
+            user.UserRoles.CollectionChanged += (sender,e) => isCollectionChanged = true;
+
+            UserRole ur1 = new UserRole();
+            db.AddNewItemToDBContext(ur1);
+            ur1.User = user;
+
+            // remove from collection on change owner test
+            Assert.IsTrue(user.UserRoles.Contains(ur1));
+            Assert.IsTrue(isCollectionChanged);
+
+            isCollectionChanged = false;
+
+            ur1.User = null;
+            Assert.IsTrue(!user.UserRoles.Contains(ur1));
+            Assert.IsTrue(isCollectionChanged);
+
+            // Delete test
+            ur1 = new UserRole();
+            db.AddNewItemToDBContext(ur1);
+            ur1.User = user;
+
+            Assert.IsTrue(user.UserRoles.Contains(ur1));
+
+            db.Delete(ur1);
+            Assert.IsTrue(!user.UserRoles.Contains(ur1));
+
+            //db.Delete(ur1);
+
+            db.Close();
+
+        }
+
+        private void UserRoles_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        [TestMethod]
         public void CacheCollectionTest()
         {
             DbContext db;
@@ -249,9 +297,6 @@ namespace EntityExtensionForORM.Tests
 
             Assert.IsTrue(db.DBschema.GetTable<User>().SQLColumnsAsString(true) == "Name,UserType_id,Statistics,id");
             Assert.IsTrue(db.DBschema.GetTable<User>().SQLColumnsAsString(false) == "Name,UserType_id,id");
-
-
-            
 
             db.Close();
 

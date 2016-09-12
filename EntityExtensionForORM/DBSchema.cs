@@ -30,6 +30,12 @@ namespace EntityExtensionForORM
             return res ? tbl : null;
         }
 
+        public ColumnInfo GetColumnInfo<T>(string clrname)
+        {
+            TableInfo ti = GetTable<T>();
+            return ti.GetColumnInfo(clrname);
+        }
+
     }
 
     public class TableInfo

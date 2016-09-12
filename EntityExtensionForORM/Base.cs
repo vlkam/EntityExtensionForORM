@@ -14,6 +14,7 @@ namespace EntityExtensionForORM
 {
     public class Base : INotifyPropertyChanged
     {
+        enum CollectionOperations { Add, Remove }
         
         [PrimaryKey]        
         public UUID id {
@@ -23,7 +24,7 @@ namespace EntityExtensionForORM
 
         public DbContext DBContext;
 
-        List<CollectionInfo> Collections = new List<CollectionInfo>();
+        protected List<CollectionInfo> Collections = new List<CollectionInfo>();
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -127,15 +128,6 @@ namespace EntityExtensionForORM
             return field;
         }
         
-        /*
-        private void AddedRef<T>(Guid id,T obj) where T : Base
-        {
-            db.InsertOrReplace(id, obj);
-            //Guid id = ChangeTracker.connect.
-            //bool t = ChangeTracker.connect.  .Find<T>(id); 
-        }
-        
-             */
 #endregion 
 
 #region Reference Get/Set
@@ -167,10 +159,17 @@ namespace EntityExtensionForORM
             {
                 idField_ = null;
             }
+
+            // Removes this object from an old owner's collection
+            if (DBContext != null && refField_ != null) UpdateCollections(propertyName, refField_, CollectionOperations.Remove);
+
             refField_ = newRef;
 
             // Is it new object
             if (DBContext != null && newRef != null && newRef.DBContext == null) DBContext.AddNewItemToDBContext(newRef);
+
+            // Adds this object to new owner's collection
+            if(DBContext != null && newRef != null) UpdateCollections(propertyName,refField_,CollectionOperations.Add);
 
             OnPropertyChanged(propertyName);
             OnPropertyChanged(propertyName + "_id");
@@ -209,6 +208,32 @@ namespace EntityExtensionForORM
             //return obj;
             Entity = DBContext.Find<T>(id);
             return Entity;
+        }
+
+        void UpdateCollections<T>(string propertyName,T owner,CollectionOperations operation) where T : Base
+        {
+            TableInfo ti = DBContext.DBschema.GetTable(this.GetType());
+            ColumnInfo ci = ti.GetColumnInfo(propertyName);
+            if (ci.ForeignKeyAttribute)
+            {
+                ti = DBContext.DBschema.GetTable<T>();
+
+                CollectionInfo colinf = owner.Collections.FirstOrDefault(x=>x.KeyPropertyInfo.ClrName == propertyName);
+                if(colinf != null && colinf.isLoadedFromDB)
+                {
+                    IList ilist = (IList)colinf.Collection;
+                    switch (operation)
+                    {
+                        case CollectionOperations.Add:
+                            if (!ilist.Contains(this)) ilist.Add(this);
+                            break;
+                        case CollectionOperations.Remove:
+                            if (ilist.Contains(this)) ilist.Remove(this);
+                            break;
+                    }
+                }
+                   
+            }
         }
 #endregion
 

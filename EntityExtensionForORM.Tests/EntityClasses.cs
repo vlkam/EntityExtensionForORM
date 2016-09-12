@@ -35,9 +35,9 @@ namespace EntityExtensionForORM.Tests
     [Table(TableName)]
     public class UserType : Base
     {
-
         public const string TableName = "UserTypes";
-        public string Type { get; set; }
+
+        public string Type { get { return Get(ref Type_); } set { Set(ref Type_, value); } }  string Type_;
 
         public UserType() : base() { }
     }
@@ -45,14 +45,17 @@ namespace EntityExtensionForORM.Tests
     [Table(TableName)]
     public class UserRole : Base
     {
-
         public const string TableName = "UserRoles";
-        public string Name { get; set; }
 
-        public UUID User_id { get; set; }
-        [ForeignKey("User_id")][Ignore]
-        public User User { get; set; }
+        public string Name { get { return Get(ref Name_); } set { Set(ref Name_, value); } }  string Name_;
 
+        // User User 
+        public UUID User_id { get { return GetEntityId(ref User_id_); } set { SetEntityId(ref User_id_, value); } }  UUID User_id_;
+        [Ignore]
+        [ForeignKey("User_id")]
+        public User User { get { return GetEntity(ref User_, ref User_id_); } set { SetEntity(ref User_, ref User_id_, value); } } User User_;
+
+        // for test only
         [Ignore]
         public Guid internal_id { get; set; }
 
