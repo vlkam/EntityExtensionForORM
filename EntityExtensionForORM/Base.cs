@@ -149,8 +149,18 @@ namespace EntityExtensionForORM
 
         protected bool SetEntity<T>(ref T refField_,ref UUID idField_, T newRef,[CallerMemberName] string propertyName = null) where T : Base
         {
+
+            // Entity hasn't been loaded. Load the entity
+            if (idField_ != null && refField_ == null)
+            {
+                refField_ = DBContext.Find<T>(idField_);
+            }
+
             if (EqualityComparer<T>.Default.Equals(refField_, newRef)) return false;
 
+            T oldref = refField_;
+
+            // sets new values
             if (newRef != null)
             {
                 if (DBContext != null) Modified();
@@ -159,13 +169,12 @@ namespace EntityExtensionForORM
             {
                 idField_ = null;
             }
-
-            // Removes this object from an old owner's collection
-            if (DBContext != null && refField_ != null) UpdateCollections(propertyName, refField_, CollectionOperations.Remove);
-
             refField_ = newRef;
 
-            // Is it new object
+            // Removes previous object from an owner's collection
+            if (DBContext != null && oldref != null) UpdateCollections(propertyName, oldref, CollectionOperations.Remove);
+
+            // Is it a new object
             if (DBContext != null && newRef != null && newRef.DBContext == null) DBContext.AddNewItemToDBContext(newRef);
 
             // Adds this object to new owner's collection

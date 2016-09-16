@@ -123,31 +123,41 @@ namespace EntityExtensionForORM
 
         public void SaveChanges()
         {
-            foreach(var keyval in Entities)
+            DbConnect.BeginTransaction();
+            try
             {
-                Entity entity = keyval.Value;
-                if (entity.State == Entity.EntityState.Unchanged) continue;
-                switch (entity.State)
+                foreach (var keyval in Entities)
                 {
-                    case Entity.EntityState.Added:
-                    case Entity.EntityState.Modified:
-                        DbConnect.InsertOrReplace(entity.HardReference, entity.Type);
-                        entity.State = Entity.EntityState.Unchanged;
-                        entity.HardReference.IsModified = false;
-                        entity.HardReference = null;
-                        break;
-                    case Entity.EntityState.Deleted:
-                        DbConnect.Delete(entity.HardReference);
-                        entity.HardReference = null;
-                        break;
-                    default:
-                        throw new Exception("Unknown operation type "+entity.State);
+                    Entity entity = keyval.Value;
+                    if (entity.State == Entity.EntityState.Unchanged) continue;
+                    switch (entity.State)
+                    {
+                        case Entity.EntityState.Added:
+                        case Entity.EntityState.Modified:
+                            DbConnect.InsertOrReplace(entity.HardReference, entity.Type);
+                            entity.State = Entity.EntityState.Unchanged;
+                            entity.HardReference.IsModified = false;
+                            entity.HardReference = null;
+                            break;
+                        case Entity.EntityState.Deleted:
+                            DbConnect.Delete(entity.HardReference);
+                            entity.HardReference = null;
+                            break;
+                        default:
+                            throw new Exception("Unknown operation type "+entity.State);
+                    }
                 }
+
+                // Removes references to deleted object
+                foreach (UUID id in Entities.Where(x => x.Value.State == Entity.EntityState.Deleted).Select(x=>x.Key).ToList()) Entities.Remove(id);
+
+                DbConnect.Commit();
             }
-
-            // Removes references to deleted object
-            foreach (UUID id in Entities.Where(x => x.Value.State == Entity.EntityState.Deleted).Select(x=>x.Key).ToList()) Entities.Remove(id);
-
+            catch(Exception ex)
+            {
+                DbConnect.Rollback();
+                throw ex;
+            }
         }
 
         public void AddNewItemToDBContext<T>(T obj) where T : Base => AddNewItemToDBContext(obj, typeof(T));
