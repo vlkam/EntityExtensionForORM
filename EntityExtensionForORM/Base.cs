@@ -163,13 +163,13 @@ namespace EntityExtensionForORM
             // sets new values
             if (newRef != null)
             {
-                if (DBContext != null) Modified();
                 idField_ = newRef.id;
             } else
             {
                 idField_ = null;
             }
             refField_ = newRef;
+            if (DBContext != null) Modified();
 
             // Removes previous object from an owner's collection
             if (DBContext != null && oldref != null) UpdateCollections(propertyName, oldref, CollectionOperations.Remove);
@@ -221,13 +221,15 @@ namespace EntityExtensionForORM
 
         void UpdateCollections<T>(string propertyName,T owner,CollectionOperations operation) where T : Base
         {
-            TableInfo ti = DBContext.DBschema.GetTable(this.GetType());
-            ColumnInfo ci = ti.GetColumnInfo(propertyName);
-            if (ci.ForeignKeyAttribute)
+            TableInfo this_ti = DBContext.DBschema.GetTable(this.GetType());
+            ColumnInfo this_ci = this_ti.GetColumnInfo(propertyName);
+            if (this_ci.ForeignKeyAttribute)
             {
-                ti = DBContext.DBschema.GetTable<T>();
+                TableInfo owner_ti = DBContext.DBschema.GetTable<T>();
+                //ColumnInfo owner_ci = owner_ti.Columns.Select(x=>x.Value).FirstOrDefault(x => x.InversePropertyName == propertyName);
+                //if (owner_ci == null) return;
 
-                CollectionInfo colinf = owner.Collections.FirstOrDefault(x=>x.KeyPropertyInfo.ClrName == propertyName);
+                CollectionInfo colinf = owner.Collections.FirstOrDefault(x=>x.KeyPropertyInfo == this_ci);
                 if(colinf != null && colinf.isLoadedFromDB)
                 {
                     IList ilist = (IList)colinf.Collection;

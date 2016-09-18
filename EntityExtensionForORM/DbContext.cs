@@ -70,6 +70,8 @@ namespace EntityExtensionForORM
                     break;
                 case Entity.EntityState.Modified:
                     break;
+                case Entity.EntityState.Deleted:
+                    break;
                 default:
                     throw new Exception("RegisterChange<T> : Entity status is invalid");
             }
@@ -330,7 +332,12 @@ namespace EntityExtensionForORM
                 // Collection
                 if (ci.InversePropertyAttribute) {
                     IEnumerable coll = (IEnumerable)ci.Property.GetValue(obj);
-                    foreach(Base elm in coll)
+
+                    // Delete operation changes the collection
+                    List<Base> lst = new List<Base>();
+                    foreach(Base elm in coll) lst.Add(elm);
+
+                    foreach (Base elm in lst)
                     {
                         if(elm != null) Delete(elm,ci.GenericType);
                     }
