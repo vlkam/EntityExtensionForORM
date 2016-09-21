@@ -43,6 +43,7 @@
     <Compile Include="DbContext.cs" />
     <Compile Include="DBSchema.cs" />
     <Compile Include="Entity.cs" />
+    <Compile Include="EnumerationClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueryBuilder.cs" />
     <Compile Include="UUID.cs" />
@@ -50,7 +51,8 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Snippets\EEcollection.snippet" />
-    <None Include="Snippets\EEprop.snippet" />
+    <None Include="Snippets\EEprop - Copy.snippet" />
+    <None Include="Snippets\EEenum.snippet" />
     <None Include="Snippets\EEref.snippet" />
   </ItemGroup>
   <ItemGroup>

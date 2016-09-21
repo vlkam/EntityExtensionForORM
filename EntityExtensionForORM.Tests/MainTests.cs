@@ -24,11 +24,36 @@ namespace EntityExtensionForORM.Tests
             return new DbContext(con);
         }
         
-
         private DbContext RecreateDB(string basename) {
             string path = PathToDb(basename);
             if (File.Exists(path)) File.Delete(path);
             return ConnectToDb(basename);
+        }
+
+        [TestMethod]
+        public void EnumerationTest()
+        {
+
+            DbContext db;
+            db = RecreateDB("EnumerationTest.db"); 
+
+            User user = new User { Name = "Peter" };
+            user.EmployeeType = EmployeeType.Manager;
+            db.AddNewItemToDBContext(user);
+
+            db.SaveChanges();
+            db.Close();
+
+            db = ConnectToDb("EnumerationTest.db");
+            user = db.FirstOrDefault<User>();
+
+            Assert.IsTrue(user.EmployeeType == EmployeeType.Manager);
+
+            bool isCheck = false;
+            user.PropertyChanged += (sender, args) => isCheck = true;
+            user.EmployeeType = EmployeeType.AssistantToTheRegionalManager;
+
+            Assert.IsTrue(isCheck);
         }
 
         [TestMethod]
@@ -72,11 +97,6 @@ namespace EntityExtensionForORM.Tests
 
             db.Close();
 
-        }
-
-        private void UserRoles_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            throw new NotImplementedException();
         }
 
         [TestMethod]
@@ -125,7 +145,6 @@ namespace EntityExtensionForORM.Tests
             UserRole ur = db.FirstOrDefault<UserRole>("Name = 'User'");
             Assert.IsTrue(ur.Name == "User");
         }
-
 
         [TestMethod]
         public void DBConnectTestMethod()

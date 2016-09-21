@@ -65,7 +65,7 @@ namespace EntityExtensionForORM
             }
            
         }
-
+        
         public static string GetPropertyName<T>(Expression<Func<T>> propertyExpression)
         {
             if (propertyExpression == null)
@@ -128,6 +128,28 @@ namespace EntityExtensionForORM
             return field;
         }
         
+#endregion 
+
+#region Enumeration properties Get/Set 
+
+        protected bool SetEnumeration<T>(ref int? field, T value,[CallerMemberName] string propertyName = null) where T : Enumeration
+        {
+            if (value == null && field == null) return false;
+
+            int? newcode = value?.Value;;
+
+            if (field == newcode) return false;
+            Modified();
+            field = newcode;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
+
+        protected T GetEnumeration<T>(ref int? field,[CallerMemberName] string propertyName = null) where T : Enumeration,new()
+        {
+            return field == null ? null : Enumeration.FromValue<T>((int)field);
+        }
+
 #endregion 
 
 #region Reference Get/Set

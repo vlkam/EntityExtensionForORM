@@ -22,6 +22,11 @@ namespace EntityExtensionForORM.Tests
         [Ignore][InverseProperty("User")][CascadeDelete]
         public ObservableCollection<UserRole> UserRoles { get { return GetCollection(ref UserRoles_); } set { SetCollection(ref UserRoles_, value); } } private ObservableCollection<UserRole> UserRoles_;
 
+        // Enumeration
+        [Ignore]
+        public EmployeeType EmployeeType { get { return GetEnumeration<EmployeeType>(ref EmployeeType_code_); } set { SetEnumeration(ref EmployeeType_code_,value); } }
+        public int? EmployeeType_code { get { return EmployeeType_code_; } set { EmployeeType_code_ = value; } } private int? EmployeeType_code_;
+
         [PrivateData]
         public string Statistics { get { return Get(ref Statistics_); } set { Set(ref Statistics_, value); } }
         private string Statistics_;
@@ -59,7 +64,16 @@ namespace EntityExtensionForORM.Tests
         [Ignore]
         public Guid internal_id { get; set; }
 
-        public UserRole() : base() { }
+    }
+
+    public class EmployeeType : Enumeration
+    {
+        public static readonly EmployeeType Manager = new EmployeeType(0, "Manager");
+        public static readonly EmployeeType Servant = new EmployeeType(1, "Servant");
+        public static readonly EmployeeType AssistantToTheRegionalManager = new EmployeeType(2, "Assistant to the Regional Manager");
+
+        public EmployeeType() { }
+        private EmployeeType(int value, string displayName) : base(value, displayName) { }
     }
 
 }
