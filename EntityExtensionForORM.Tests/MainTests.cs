@@ -38,7 +38,7 @@ namespace EntityExtensionForORM.Tests
             db = RecreateDB("EnumerationTest.db"); 
 
             User user = new User { Name = "Peter" };
-            user.EmployeeType = EmployeeType.Manager;
+            user.EmployeeType = EmployeeType.Servant;
             db.AddNewItemToDBContext(user);
 
             db.SaveChanges();
@@ -47,7 +47,7 @@ namespace EntityExtensionForORM.Tests
             db = ConnectToDb("EnumerationTest.db");
             user = db.FirstOrDefault<User>();
 
-            Assert.IsTrue(user.EmployeeType == EmployeeType.Manager);
+            Assert.IsTrue(user.EmployeeType == EmployeeType.Servant);
 
             bool isCheck = false;
             user.PropertyChanged += (sender, args) => isCheck = true;
@@ -313,10 +313,7 @@ namespace EntityExtensionForORM.Tests
         public void ColumnsAsString()
         {
             DbContext db = RecreateDB("ColumnsAsString.db");
-
-            Assert.IsTrue(db.DBschema.GetTable<User>().SQLColumnsAsString(true) == "Name,UserType_id,Statistics,id");
-            Assert.IsTrue(db.DBschema.GetTable<User>().SQLColumnsAsString(false) == "Name,UserType_id,id");
-
+            Assert.IsTrue(db.DBschema.GetTable<User>().SQLColumnsAsString(true) == "Name,UserType_id,EmployeeType,Statistics,id");
             db.Close();
 
         }

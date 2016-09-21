@@ -1,4 +1,5 @@
 ﻿
+using SQLite.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,14 +8,17 @@ using System.Reflection;
 namespace EntityExtensionForORM
 {
     // https://lostechies.com/jimmybogard/2008/08/12/enumeration-classes/
-    public abstract class Enumeration : IComparable
+    public abstract class Enumeration : IComparable,ISerializable<int>
     {
         private readonly int _value;
         private readonly string _displayName;
 
-        protected Enumeration()
+        public Enumeration(int value)
         {
+            _value = value;
         }
+
+        public Enumeration() { }
 
         protected Enumeration(int value, string displayName)
         {
@@ -109,10 +113,10 @@ namespace EntityExtensionForORM
             return matchingItem;
         }
 
-        public int CompareTo(object other)
-        {
-            return Value.CompareTo(((Enumeration) other).Value);
-        }
+        public int CompareTo(object other) => Value.CompareTo(((Enumeration) other).Value);
+        
+        public int Serialize() => _value;
+
     }
 }
 

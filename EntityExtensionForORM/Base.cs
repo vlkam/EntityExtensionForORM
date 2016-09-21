@@ -136,7 +136,7 @@ namespace EntityExtensionForORM
         {
             if (value == null && field == null) return false;
 
-            int? newcode = value?.Value;;
+            int? newcode = value?.Value;
 
             if (field == newcode) return false;
             Modified();

@@ -51,7 +51,7 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Snippets\EEcollection.snippet" />
-    <None Include="Snippets\EEprop - Copy.snippet" />
+    <None Include="Snippets\EEprop.snippet" />
     <None Include="Snippets\EEenum.snippet" />
     <None Include="Snippets\EEref.snippet" />
   </ItemGroup>

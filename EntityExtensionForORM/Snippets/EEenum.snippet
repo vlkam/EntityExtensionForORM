@@ -5,11 +5,11 @@
       <SnippetTypes>
         <SnippetType>Expansion</SnippetType>
       </SnippetTypes>
-      <Title>Propety</Title>
+      <Title>Entity Extension for enumeration</Title>
       <Author>vlkam</Author>
       <Description></Description>
       <HelpUrl></HelpUrl>
-      <Shortcut>eep</Shortcut>
+      <Shortcut>eeen</Shortcut>
     </Header>
     <Snippet>
       <Declarations>
@@ -29,11 +29,8 @@
         </Literal>
       </Declarations>
       <Code Language="csharp">
-          <![CDATA[public $Type$ $Name$ { get { return Get(ref $Name$_); } set { Set(ref $Name$_, value); } } $Type$ $Name$_;]]>
+          <![CDATA[public $Type$ $Name$ { get { return GetEnumeration<$Type$>(ref $Name$_); } set { SetEnumeration(ref $Name$_, value); } } int? $Name$_;]]>
       </Code>
     </Snippet>
-
-
-    
   </CodeSnippet>
 </CodeSnippets>

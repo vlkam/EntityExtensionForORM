@@ -2,6 +2,8 @@
 using SQLite.Net.Attributes;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Diagnostics.Eventing;
 
 namespace EntityExtensionForORM.Tests
 {
@@ -23,9 +25,7 @@ namespace EntityExtensionForORM.Tests
         public ObservableCollection<UserRole> UserRoles { get { return GetCollection(ref UserRoles_); } set { SetCollection(ref UserRoles_, value); } } private ObservableCollection<UserRole> UserRoles_;
 
         // Enumeration
-        [Ignore]
-        public EmployeeType EmployeeType { get { return GetEnumeration<EmployeeType>(ref EmployeeType_code_); } set { SetEnumeration(ref EmployeeType_code_,value); } }
-        public int? EmployeeType_code { get { return EmployeeType_code_; } set { EmployeeType_code_ = value; } } private int? EmployeeType_code_;
+        public EmployeeType EmployeeType { get { return GetEnumeration<EmployeeType>(ref EmployeeType_code_); } set { SetEnumeration(ref EmployeeType_code_,value); } }  private int? EmployeeType_code_;
 
         [PrivateData]
         public string Statistics { get { return Get(ref Statistics_); } set { Set(ref Statistics_, value); } }
@@ -72,7 +72,8 @@ namespace EntityExtensionForORM.Tests
         public static readonly EmployeeType Servant = new EmployeeType(1, "Servant");
         public static readonly EmployeeType AssistantToTheRegionalManager = new EmployeeType(2, "Assistant to the Regional Manager");
 
-        public EmployeeType() { }
+        public  EmployeeType(int value) : base(value) { }
+        public  EmployeeType() { }
         private EmployeeType(int value, string displayName) : base(value, displayName) { }
     }
 
