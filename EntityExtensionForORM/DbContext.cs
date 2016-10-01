@@ -262,6 +262,9 @@ namespace EntityExtensionForORM
         // for example condititon  "code = 'RUS'"
         public T FirstOrDefault<T>(string condition = null) where T : Base
         {
+
+            SaveChanges();
+
             string sql = "SELECT id FROM " + DBschema.GetTable<T>().SqlName;
             if (!string.IsNullOrEmpty(condition)) sql += " WHERE " + condition;
             sql += " LIMIT 1";
@@ -286,17 +289,23 @@ namespace EntityExtensionForORM
 
         public int Count<T>(string condition = null) where T : Base
         {
-            QueryBuilder qb = new QueryBuilder(DbConnect);
+            // A correct query requires save all changes to database
+            SaveChanges();
+
+            QueryBuilder<T> qb = new QueryBuilder<T>(DbConnect);
             qb.AddField("Count(*)");
-            qb.AddFrom<T>();
             qb.AddWhere(condition);
             return DbConnect.ExecuteScalar<int>(qb.Sql());
         }
 
-        public List<T> Query<T>(QueryBuilder qb) where T : Base
+        public List<T> Query<T>(QueryBuilder<T> qb) where T : Base
         {
+
+            // A correct query requires save all changes to database
+            SaveChanges();
+
             qb.Select = "id";
-            qb.AddFrom<T>();
+
             List<UUID> idlst = DbConnect.Query<UUID>(qb.Sql());
             List<T> lst = new List<T>();
             foreach (UUID id in idlst)

@@ -41,6 +41,7 @@
     <Compile Include="CollectionInfo.cs" />
     <Compile Include="DbConnect.cs" />
     <Compile Include="DbContext.cs" />
+    <Compile Include="DbMetadata.cs" />
     <Compile Include="DBSchema.cs" />
     <Compile Include="Entity.cs" />
     <Compile Include="EnumerationClass.cs" />

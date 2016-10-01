@@ -1,50 +1,41 @@
 ﻿
 using System.Text;
+using System.Reflection;
 
 namespace EntityExtensionForORM
 {
-    public class QueryBuilder
+    public class QueryBuilder<T> where T : Base
     {
-        DbConnect DbConnect;
-         
-        //public StringBuilder sql;
+        private DbConnect DbConnect;
+
         public string Select;
         public string From;
         public string Where;
         public string Order;
-        public string Limit;
+        public int Limit;
+
+        public QueryBuilder(DbContext dbcontext) : this(dbcontext.DbConnect) { }
 
         public QueryBuilder(DbConnect dbconnect)
         {
             DbConnect = dbconnect;
+            if (typeof(T).GetTypeInfo().IsSubclassOf(typeof(Base)))
+            {
+                From = DbConnect.DBschema.GetTable<T>().SqlName;
+            }
         }
 
-        public QueryBuilder(DbContext dbcontext)
-        {
-            DbConnect = dbcontext.DbConnect;
-        }
-
-
-        public void AddField(string fields) => Select = Select == null ? "" : "," + fields;
+        public void AddField(string fields) => Select = string.IsNullOrEmpty(Select) ? "" : "," + fields;
         
-        public void AddFrom<T>() where T : Base =>  From = DbConnect.DBschema.GetTable<T>().SqlName;
+        public void AddWhere(string where) => Where = string.IsNullOrEmpty(Where) ? "" : " AND " + where;
 
-        public void AddWhere(string where) {
-            if (where == null) return;
-            Where = Where == null ? "" : " AND " + where;
-        }
-
-        public void AddWhere(string where, string param) => AddWhere(where + " = '"+param+"'");
-
-        public void AddOrder(string order) => Order = order;
-
-        public void AddLimit(string limit) => Limit = limit;
+        public void AddWhere(string where, string param) => AddWhere($"{where} = '{param}'");
 
         public string Sql()
         {
             StringBuilder sql = new StringBuilder(1000);
             sql.Append("SELECT ");
-            sql.Append(Select);
+            sql.Append(string.IsNullOrEmpty(Select) ? "*": Select);
             sql.Append(" FROM ");
             sql.Append(From);
             if (!string.IsNullOrEmpty(Where))
@@ -57,9 +48,10 @@ namespace EntityExtensionForORM
                 sql.Append(" ORDER BY ");
                 sql.Append(Order);
             }
-            if (!string.IsNullOrEmpty(Limit))
+            if (Limit > 0 )
             {
-                sql.Append(Limit);
+                sql.Append(" LIMIT ");
+                sql.Append(Limit.ToString());
             }
             return sql.ToString();
         }

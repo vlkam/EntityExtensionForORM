@@ -27,6 +27,8 @@ namespace EntityExtensionForORM
         public DbConnect(ISQLitePlatform platform,string path) : base (platform,path)
         {
             ExtraTypeMappings.Add(typeof(UUID), "blob");
+
+            CreateTable<DbMetadata>();
         }
 
         public void CreateSchema()
