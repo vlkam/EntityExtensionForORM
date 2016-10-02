@@ -26,29 +26,28 @@ namespace EntityExtensionForORM
 
         protected List<CollectionInfo> Collections = new List<CollectionInfo>();
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
         public Base()
         {
             id_ = new UUID();
         }
 
-        public bool IsAttachToContext() => DBContext != null;
+        // INotifyPropertyChanged
+        readonly WeakEventSource<PropertyChangedEventArgs> _propertyChangedSource = new WeakEventSource<PropertyChangedEventArgs>();
+        public event PropertyChangedEventHandler PropertyChanged
+        {
+            add { _propertyChangedSource.Subscribe(value); }
+            remove { _propertyChangedSource.Unsubscribe(value); }
+        }
 
         public void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            _propertyChangedSource.Raise(this,new PropertyChangedEventArgs(propertyName));
         }
 
-        public virtual void OnPropertyChanged<T>(Expression<Func<T>> propertyExpression)
-        {
-            var handler = PropertyChanged;
-            if (handler != null)
-            {
-                var propertyName = GetPropertyName(propertyExpression);
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
-        }
+        // ReSharper disable once ExplicitCallerInfoArgument
+        public virtual void OnPropertyChanged<T>(Expression<Func<T>> propertyExpression) => OnPropertyChanged(GetPropertyName(propertyExpression));
+
+        public bool IsAttachToContext() => DBContext != null;
 
         public void RefreshFromDB() 
         {

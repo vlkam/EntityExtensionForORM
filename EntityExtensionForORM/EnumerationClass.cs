@@ -10,31 +10,23 @@ namespace EntityExtensionForORM
     // https://lostechies.com/jimmybogard/2008/08/12/enumeration-classes/
     public abstract class Enumeration : IComparable,ISerializable<int>
     {
-        private readonly int _value;
-        private readonly string _displayName;
 
-        public Enumeration(int value)
+        public int Value { get; private set; }
+        public string DisplayName { get; private set; }
+
+        protected Enumeration() { }
+
+        protected Enumeration(int value)
         {
-            _value = value;
+            Value = value;
         }
-
-        public Enumeration() { }
 
         protected Enumeration(int value, string displayName)
         {
-            _value = value;
-            _displayName = displayName;
+            Value = value;
+            DisplayName = displayName;
         }
 
-        public int Value
-        {
-            get { return _value; }
-        }
-
-        public string DisplayName
-        {
-            get { return _displayName; }
-        }
 
         public override string ToString()
         {
@@ -72,14 +64,14 @@ namespace EntityExtensionForORM
             }
 
             var typeMatches = GetType().Equals(obj.GetType());
-            var valueMatches = _value.Equals(otherValue.Value);
+            var valueMatches = Value.Equals(otherValue.Value);
 
             return typeMatches && valueMatches;
         }
 
         public override int GetHashCode()
         {
-            return _value.GetHashCode();
+            return Value.GetHashCode();
         }
 
         public static int AbsoluteDifference(Enumeration firstValue, Enumeration secondValue)
@@ -115,7 +107,7 @@ namespace EntityExtensionForORM
 
         public int CompareTo(object other) => Value.CompareTo(((Enumeration) other).Value);
         
-        public int Serialize() => _value;
+        public int Serialize() => Value;
 
     }
 }
