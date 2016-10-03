@@ -49,8 +49,10 @@ namespace EntityExtensionForORM
 
         public override bool Equals(object obj)
         {
-            if (obj == null) return false;
-            for (byte i = 0; i < 16; i++) if (this.id[i] != ((UUID)obj).id[i]) return false;
+            UUID obj_ = obj as UUID;
+            if (obj_ == null) return false;
+
+            for (byte i = 0; i < 16; i++) if (id[i] != obj_.id[i]) return false;
             return true;
         }
 
