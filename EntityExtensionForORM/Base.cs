@@ -15,7 +15,7 @@ namespace EntityExtensionForORM
     public class Base : INotifyPropertyChanged
     {
         enum CollectionOperations { Add, Remove }
-        
+
         [PrimaryKey]        
         public UUID id {
             get { return Get(ref id_); }
@@ -182,13 +182,7 @@ namespace EntityExtensionForORM
             T oldref = refField_;
 
             // sets new values
-            if (newRef != null)
-            {
-                idField_ = newRef.id;
-            } else
-            {
-                idField_ = null;
-            }
+            idField_ = newRef?.id;
             refField_ = newRef;
             if (DBContext != null) Modified();
 
@@ -242,25 +236,31 @@ namespace EntityExtensionForORM
 
         void UpdateCollections<T>(string propertyName,T owner,CollectionOperations operation) where T : Base
         {
-            TableInfo this_ti = DBContext.DBschema.GetTable(this.GetType());
-            ColumnInfo this_ci = this_ti.GetColumnInfo(propertyName);
-            if (this_ci.ForeignKeyAttribute)
+            TableInfo thisTi = DBContext.DBschema.GetTable(this.GetType());
+            ColumnInfo thisCi = thisTi.GetColumnInfo(propertyName);
+            if (thisCi.ForeignKeyAttribute)
             {
-                TableInfo owner_ti = DBContext.DBschema.GetTable<T>();
+                //TableInfo owner_ti = DBContext.DBschema.GetTable<T>();
                 //ColumnInfo owner_ci = owner_ti.Columns.Select(x=>x.Value).FirstOrDefault(x => x.InversePropertyName == propertyName);
                 //if (owner_ci == null) return;
 
-                CollectionInfo colinf = owner.Collections.FirstOrDefault(x=>x.KeyPropertyInfo == this_ci);
+                CollectionInfo colinf = owner.Collections.FirstOrDefault(x=>x.KeyPropertyInfo == thisCi);
                 if(colinf != null && colinf.isLoadedFromDB)
                 {
                     IList ilist = (IList)colinf.Collection;
                     switch (operation)
                     {
                         case CollectionOperations.Add:
-                            if (!ilist.Contains(this)) ilist.Add(this);
+                            if (!ilist.Contains(this))
+                            {
+                                ilist.Add(this);
+                            }
                             break;
                         case CollectionOperations.Remove:
-                            if (ilist.Contains(this)) ilist.Remove(this);
+                            if (ilist.Contains(this))
+                            {
+                                ilist.Remove(this);
+                            }
                             break;
                     }
                 }
@@ -274,15 +274,16 @@ namespace EntityExtensionForORM
         {
             if (DBContext != null)
             {
-                CollectionInfo collection_info = Collections.FirstOrDefault(x => x.Collection == sender);
-                if (collection_info == null) throw new Exception("Collection not initialized");
+                CollectionInfo collectionInfo = Collections.FirstOrDefault(x => x.Collection == sender);
+                if (collectionInfo == null) throw new Exception("Collection not initialized");
+
                 switch (e.Action)
                 {
                     case NotifyCollectionChangedAction.Add:
                         foreach(Base obj in e.NewItems)
                         {
-                            if (obj.DBContext == null) DBContext.AddNewItemToDBContext(obj,collection_info.DependentTableInfo.Type);
-                            PropertyInfo prop = collection_info.KeyIdProperytInfo.Property;
+                            if (obj.DBContext == null) DBContext.AddNewItemToDBContext(obj,collectionInfo.DependentTableInfo.Type);
+                            PropertyInfo prop = collectionInfo.KeyIdProperytInfo.Property;
                             UUID old_id = (UUID)prop.GetValue(obj);
                             if(old_id != this.id)
                             {
@@ -297,14 +298,14 @@ namespace EntityExtensionForORM
                         foreach(Base obj in e.OldItems)
                         {
                             if (obj.DBContext == null) throw new Exception ("A collection has an item which hasn't the DBContext");
-                            if (collection_info.KeyIdProperytInfo.IsNullable)
+                            if (collectionInfo.KeyIdProperytInfo.IsNullable)
                             {
-                                collection_info.KeyIdProperytInfo.Property.SetValue(obj, null);
+                                collectionInfo.KeyIdProperytInfo.Property.SetValue(obj, null);
                             }
 
-                            if (collection_info.InversePropertyInfo.CascadeDeleteAttribute)
+                            if (collectionInfo.InversePropertyInfo.CascadeDeleteAttribute)
                             {
-                                DBContext.Delete(obj, collection_info.InversePropertyInfo.GenericType);
+                                DBContext.Delete(obj, collectionInfo.InversePropertyInfo.GenericType);
                             }
                         }
                         break;
@@ -446,9 +447,9 @@ namespace EntityExtensionForORM
 
         public override bool Equals(object obj)
         {
-            if (obj == null) return false;
-            if (!(obj is Base)) return false;
-            return ((Base)obj).id == this.id;
+            Base tobj = obj as Base;
+            if (tobj == null) return false;
+            return tobj.id == this.id;
         }
 
         public override int GetHashCode()

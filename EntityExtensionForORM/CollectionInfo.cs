@@ -1,7 +1,7 @@
 ﻿
 namespace EntityExtensionForORM
 {
-   public class CollectionInfo {
+    public class CollectionInfo {
 
         public object Collection;
         public bool isLoadedFromDB;

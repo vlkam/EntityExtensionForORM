@@ -121,7 +121,7 @@ namespace EntityExtensionForORM.Tests
 
             db = ConnectToDb("CacheCollectionTest.db");
             User user1 = db.FirstOrDefault<User>();
-            UserRole ur1 = db.FirstOrDefault<UserRole>("Name = 'User'");
+            UserRole ur1 = db.FirstOrDefault<UserRole>($"{nameof(UserRole.Name)} = 'User'");
             ur1.internal_id = new Guid();
             Assert.IsTrue(user1.UserRoles.FirstOrDefault(x=>x.Name == "User").internal_id == ur1.internal_id);
         }
@@ -142,7 +142,7 @@ namespace EntityExtensionForORM.Tests
             db.AddNewItemToDBContext(user);
             db.SaveChanges();
 
-            UserRole ur = db.FirstOrDefault<UserRole>("Name = 'User'");
+            UserRole ur = db.FirstOrDefault<UserRole>($"{nameof(UserRole.Name)} = 'User'");
             Assert.IsTrue(ur.Name == "User");
         }
 
@@ -268,7 +268,7 @@ namespace EntityExtensionForORM.Tests
             Assert.IsTrue(db.Entities.Count == 4);
             Assert.IsTrue(db.Entities[user.id].State == Entity.EntityState.Added);
             Assert.IsTrue(db.Entities[user.UserRoles[0].id].State == Entity.EntityState.Added);
-            Assert.IsTrue(!db.Entities.Any(x => x.Value.State != Entity.EntityState.Added));
+            Assert.IsTrue(db.Entities.All(x => x.Value.State == Entity.EntityState.Added));
 
             db.SaveChanges();
             Assert.IsTrue(db.Entities[user.id].State == Entity.EntityState.Unchanged);
@@ -294,7 +294,7 @@ namespace EntityExtensionForORM.Tests
 
             db.Delete(user);
             
-            Assert.IsTrue(!db.Entities.Any(x=>x.Value.State != Entity.EntityState.Deleted));
+            Assert.IsTrue(db.Entities.All(x => x.Value.State == Entity.EntityState.Deleted));
             db.SaveChanges();
             db.Close();
 
@@ -304,9 +304,9 @@ namespace EntityExtensionForORM.Tests
 
             user = db.Find<User>(userid);
             Assert.IsNull(user);
-            Assert.IsTrue(db.DbConnect.Table<User>().Count() == 0);
-            Assert.IsTrue(db.DbConnect.Table<UserRole>().Count() == 0);
-            Assert.IsTrue(db.DbConnect.Table<UserType>().Count() == 0);
+            Assert.IsTrue(!db.DbConnect.Table<User>().Any());
+            Assert.IsTrue(!db.DbConnect.Table<UserRole>().Any());
+            Assert.IsTrue(!db.DbConnect.Table<UserType>().Any());
         }
 
         [TestMethod]
@@ -410,9 +410,10 @@ namespace EntityExtensionForORM.Tests
             db.AddNewItemToDBContext(user);
 
             UserRole r = user.UserRoles.First(x => x.Name == "User");
+            string username = r.User.Name;
             user.UserRoles.Remove(r);
 
-            Assert.IsTrue(db.Entities.Where(x => x.Value.State == Entity.EntityState.Deleted).Count() == 1);
+            Assert.IsTrue(db.Entities.Count(x => x.Value.State == Entity.EntityState.Deleted) == 1);
         }
 
     }

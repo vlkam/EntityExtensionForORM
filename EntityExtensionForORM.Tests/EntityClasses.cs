@@ -22,7 +22,7 @@ namespace EntityExtensionForORM.Tests
         
         // Navigation property
         [Ignore][InverseProperty("User")][CascadeDelete]
-        public ObservableCollection<UserRole> UserRoles { get { return GetCollection(ref UserRoles_); } set { SetCollection(ref UserRoles_, value); } } private ObservableCollection<UserRole> UserRoles_;
+        public SynchronizedObservableCollection<UserRole> UserRoles { get { return GetCollection(ref UserRoles_); } set { SetCollection(ref UserRoles_, value); } } private SynchronizedObservableCollection<UserRole> UserRoles_;
 
         // Enumeration
         public EmployeeType EmployeeType { get { return GetEnumeration<EmployeeType>(ref EmployeeType_code_); } set { SetEnumeration(ref EmployeeType_code_,value); } }  private int? EmployeeType_code_;
@@ -31,8 +31,8 @@ namespace EntityExtensionForORM.Tests
         public string Statistics { get { return Get(ref Statistics_); } set { Set(ref Statistics_, value); } }
         private string Statistics_;
 
-        public User() : base() {
-            UserRoles = new ObservableCollection<UserRole>();
+        public User() {
+            UserRoles = new SynchronizedObservableCollection<UserRole>();
         }
 
     }
@@ -44,7 +44,6 @@ namespace EntityExtensionForORM.Tests
 
         public string Type { get { return Get(ref Type_); } set { Set(ref Type_, value); } }  string Type_;
 
-        public UserType() : base() { }
     }
 
     [Table(TableName)]

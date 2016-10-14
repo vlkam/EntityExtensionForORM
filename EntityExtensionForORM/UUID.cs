@@ -13,13 +13,14 @@ namespace EntityExtensionForORM
             set; }
 
         [Ignore]
-        public Guid guid { get { return new Guid(id); } }
+        public Guid guid => new Guid(id);
+
         [Ignore]
         public string Hex { get
             {
                 StringBuilder hex = new StringBuilder(id.Length * 2);
                 foreach (byte b in id)  hex.AppendFormat("{0:x2}", b);
-                return "X'"+hex.ToString()+"'";
+                return "X'"+hex+"'";
             }
         }
 
@@ -49,18 +50,12 @@ namespace EntityExtensionForORM
 
         public override bool Equals(object obj)
         {
-            UUID obj_ = obj as UUID;
-            if (obj_ == null) return false;
-
-            for (byte i = 0; i < 16; i++) if (id[i] != obj_.id[i]) return false;
+            if (!(obj is UUID)) return false;
+            for (byte i = 0; i < 16; i++) if (id[i] != ((UUID)obj).id[i]) return false;
             return true;
         }
 
-        public override int GetHashCode()
-        {
-            int hash = 0;
-            for (byte i = 0; i < 16; i++) hash += (this.id[i]<<i);
-            return hash;
-        }
+        public override int GetHashCode() =>  id[0] ^ (id[1] << 16) | id[2] ^ (id[3] << 24) | id[4];
+
     }
 }
