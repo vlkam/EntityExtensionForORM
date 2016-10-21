@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace EntityExtensionForORM
 {
@@ -27,7 +28,6 @@ namespace EntityExtensionForORM
         public DbConnect(ISQLitePlatform platform,string path) : base (platform,path)
         {
             ExtraTypeMappings.Add(typeof(UUID), "blob");
-
             CreateTable<DbMetadata>();
         }
 
@@ -124,6 +124,60 @@ namespace EntityExtensionForORM
                         //ci.GenericTypeInfo = ci.GenericType.GetTypeInfo();
                     }
                 }
+            }
+        }
+
+        public void RemoveOldColumns()
+        {
+            if (DBschema == null) throw new Exception("Dbschema not created");
+
+            bool tablesChanged = false;
+
+            foreach (TableMapping tableMap in TableMappings)
+            {
+
+                if (!tableMap.MappedType.GetTypeInfo().IsSubclassOf(typeof (Base))) continue;
+
+                TableInfo tableInfo = DBschema.Tables.Values.First(x=>x.SqlName == tableMap.TableName);
+
+                SQLiteCommand cmd = CreateCommand("PRAGMA table_info('" + tableMap.TableName + "');");
+                List<column_info_from_sqlite> sql_columns = cmd.ExecuteDeferredQuery<column_info_from_sqlite>().ToList();
+
+                List<column_info_from_sqlite> columnToDelete = new List<column_info_from_sqlite>();
+                foreach (column_info_from_sqlite column in sql_columns)
+                {
+                    if (!tableInfo.Columns.Values.Any(x => x.SqlName == column.name)) columnToDelete.Add(column);
+                }
+
+                if (columnToDelete.Count > 0)
+                {
+
+                    tablesChanged = true;
+
+                    string oldTable = tableInfo.SqlName + "_old;";
+                    string SQLcolumns = tableInfo.SQLColumnsAsString(true);
+
+                    cmd = CreateCommand("ALTER TABLE "+tableInfo.SqlName+" RENAME TO "+oldTable+";");
+                    cmd.ExecuteNonQuery();
+
+                    CreateTable(tableInfo.Type);
+
+                    cmd = CreateCommand(
+                        "INSERT INTO "+tableInfo.SqlName+" ("+SQLcolumns+") SELECT "+ SQLcolumns+" FROM " + oldTable+Environment.NewLine+
+                        "DROP TABLE " + tableInfo.SqlName +"tmp;"
+                        );
+
+                        //DROP TABLE " + tableInfo.SqlName +@"tmp;
+                        //COMMIT;
+                        //PRAGMA foreign_keys=ON;");
+                    cmd.ExecuteNonQuery();
+
+                }
+            }
+
+            if (tablesChanged)
+            {
+                CreateSchema();
             }
         }
 

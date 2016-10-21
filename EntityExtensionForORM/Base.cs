@@ -312,6 +312,10 @@ namespace EntityExtensionForORM
                         
                     case NotifyCollectionChangedAction.Move:
                         break;
+
+                    case NotifyCollectionChangedAction.Reset:
+                        break;
+
                     default:
                         throw new Exception("CollectionChanged: Operation "+e.Action+" not permitted");
                 }
